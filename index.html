@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="KelasHub adalah ruang kerja belajar terpusat untuk sekolah, guru, dan murid." />
+    <title>Beranda | KelasHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <svg class="svg-sprite" aria-hidden="true">
+      <symbol id="icon-home" viewBox="0 0 24 24"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"/><path d="M9 20v-6h6v6"/></symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h2M14 14h2M8 17h2"/></symbol>
+      <symbol id="icon-file" viewBox="0 0 24 24"><path d="M7 4h10a2 2 0 0 1 2 2v14H5V6a2 2 0 0 1 2-2Z"/><path d="M9 4.5V3h6v1.5M8.5 10h7M8.5 14h7M8.5 18H12"/></symbol>
+      <symbol id="icon-chart" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7M3 20h18"/></symbol>
+      <symbol id="icon-users" viewBox="0 0 24 24"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM16 4.5a3.5 3.5 0 0 1 0 6.8M16 15h1.5a3.5 3.5 0 0 1 3.5 3.5V20"/></symbol>
+      <symbol id="icon-megaphone" viewBox="0 0 24 24"><path d="M4 12h3l9-5v10l-9-5H4v5h2v-5"/><path d="M16 10.2c1.1.35 1.9 1.02 1.9 1.8s-.8 1.45-1.9 1.8M19 8.5c1.55.85 2.5 2.05 2.5 3.5s-.95 2.65-2.5 3.5"/></symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.55 2.55l-.1-.1a1.8 1.8 0 0 0-3.07 1.27v.28a1.8 1.8 0 0 1-3.6 0v-.28a1.8 1.8 0 0 0-3.07-1.27l-.1.1a1.8 1.8 0 1 1-2.55-2.55l.1-.1A1.8 1.8 0 0 0 3.3 12H3a1.8 1.8 0 0 1 0-3.6h.3A1.8 1.8 0 0 0 4.57 5.3l-.1-.1a1.8 1.8 0 1 1 2.55-2.55l.1.1A1.8 1.8 0 0 0 10.2 1.5v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3.07 1.27l.1-.1a1.8 1.8 0 1 1 2.55 2.55l-.1.1A1.8 1.8 0 0 0 20.7 8.4h.3a1.8 1.8 0 0 1 0 3.6h-.3A1.8 1.8 0 0 0 19.4 15Z"/></symbol>
+      <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></symbol>
+      <symbol id="icon-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+      <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+      <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+      <symbol id="icon-bell" viewBox="0 0 24 24"><path d="M18 9.5a6 6 0 0 0-12 0c0 7-3 7-3 8.5h18c0-1.5-3-1.5-3-8.5ZM10 21h4"/></symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 4v11M8 11l4 4 4-4M5 20h14"/></symbol>
+      <symbol id="icon-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+      <symbol id="icon-school" viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-5h6v5M8 10h.01M12 10h.01M16 10h.01"/></symbol>
+      <symbol id="icon-user" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0"/></symbol>
+      <symbol id="icon-logout" viewBox="0 0 24 24"><path d="M10 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M14 16l4-4-4-4M9 12h9"/></symbol>
+      <symbol id="icon-grid" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/></symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+    </svg>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+          <div class="brand-lockup">
+            <div class="brand-mark" aria-hidden="true"><span class="brand-cube">+</span></div>
+            <div>
+              <p class="brand-name">kelas<span>hub</span></p>
+              <p class="brand-caption">LEARNING WORKSPACE</p>
+            </div>
+          </div>
+          <button class="mobile-close" id="close-sidebar" type="button" aria-label="Tutup menu"><svg class="icon"><use href="#icon-close"></use></svg></button>
+        </div>
+
+        <div class="school-switcher">
+          <div class="school-logo">S5</div>
+          <div class="school-copy"><strong>SMA Negeri 5 Bandung</strong><span>Sekolah aktif</span></div>
+          <button class="switcher-button" type="button" aria-label="Ganti sekolah"><svg class="icon"><use href="#icon-chevron"></use></svg></button>
+        </div>
+
+        <nav class="sidebar-nav" id="sidebar-nav" aria-label="Navigasi utama">
+          <p class="nav-label">Ruang belajar</p>
+          <a class="nav-item active" href="#beranda" data-page="Beranda"><svg class="icon"><use href="#icon-home"></use></svg><span>Beranda</span><span class="nav-count">04</span></a>
+          <a class="nav-item" href="#jadwal" data-page="Jadwal Pelajaran"><svg class="icon"><use href="#icon-calendar"></use></svg><span>Jadwal Pelajaran</span></a>
+          <a class="nav-item" href="#tugas" data-page="Tugas & Pengumpulan"><svg class="icon"><use href="#icon-file"></use></svg><span>Tugas &amp; Pengumpulan</span><span class="nav-count warm">08</span></a>
+          <a class="nav-item" href="#nilai" data-page="Input Nilai"><svg class="icon"><use href="#icon-chart"></use></svg><span>Input Nilai</span></a>
+
+          <p class="nav-label nav-label-spaced">Kelola sekolah</p>
+          <a class="nav-item" href="#pengguna" data-page="Pengguna & Kelas"><svg class="icon"><use href="#icon-users"></use></svg><span>Pengguna &amp; Kelas</span></a>
+          <a class="nav-item" href="#pengumuman" data-page="Pengumuman"><svg class="icon"><use href="#icon-megaphone"></use></svg><span>Pengumuman</span><span class="nav-count pink">02</span></a>
+          <a class="nav-item" href="#langganan" data-page="Kelola Langganan"><svg class="icon"><use href="#icon-file"></use></svg><span>Kelola Langganan</span></a>
+          <a class="nav-item" href="#pengaturan" data-page="Pengaturan Sekolah"><svg class="icon"><use href="#icon-settings"></use></svg><span>Pengaturan Sekolah</span></a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="help-card">
+            <div class="help-icon"><span>?</span></div>
+            <p>Butuh bantuan?</p>
+            <span>Tim KelasHub siap membantu.</span>
+            <button class="help-link" type="button" data-toast="Pusat bantuan akan segera tersedia.">Lihat pusat bantuan <svg class="icon"><use href="#icon-arrow"></use></svg></button>
+          </div>
+          <p class="sidebar-version">KelasHub <span>v1.0</span></p>
+        </div>
+      </aside>
+
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+      <div class="page-wrap">
+        <header class="topbar">
+          <button class="mobile-menu" id="open-sidebar" type="button" aria-label="Buka menu"><svg class="icon"><use href="#icon-menu"></use></svg></button>
+          <div class="breadcrumb" aria-label="Lokasi halaman"><span>SMA Negeri 5 Bandung</span><svg class="icon"><use href="#icon-arrow"></use></svg><strong id="breadcrumb-page">Beranda</strong></div>
+          <div class="topbar-actions">
+            <button class="icon-button notification-button" type="button" aria-label="Notifikasi" data-toast="Belum ada notifikasi baru."><svg class="icon"><use href="#icon-bell"></use></svg><span class="notification-dot"></span></button>
+            <button class="role-switcher" id="role-switcher" type="button" aria-label="Ganti mode tampilan"><span class="role-switcher-dot"></span><span id="role-label">Guru</span><svg class="icon"><use href="#icon-chevron"></use></svg></button>
+            <div class="profile-wrap">
+              <button class="profile-button" id="profile-toggle" type="button" aria-expanded="false" aria-controls="profile-menu">
+                <span class="avatar avatar-profile">NR</span>
+                <span class="profile-copy"><strong>Nabila Rahma</strong><span>Guru</span></span>
+                <svg class="profile-chevron icon"><use href="#icon-chevron"></use></svg>
+              </button>
+              <div class="profile-menu" id="profile-menu" hidden>
+                <div class="profile-menu-header"><span class="avatar avatar-profile">NR</span><div><strong>Nabila Rahma</strong><span>nabila@sman5bdg.sch.id</span></div></div>
+                <button type="button" data-route="profile"><svg class="icon"><use href="#icon-user"></use></svg>Profil saya</button>
+                <button type="button" data-route="settings"><svg class="icon"><use href="#icon-settings"></use></svg>Pengaturan akun</button>
+                <button id="profile-role-toggle" type="button"><svg class="icon"><use href="#icon-users"></use></svg><span>Mode Murid</span></button>
+                <div class="profile-menu-divider"></div>
+                <button class="logout-button" type="button" data-route="auth"><svg class="icon"><use href="#icon-logout"></use></svg>Keluar</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <main class="main-content" id="beranda">
+          <section class="page-intro">
+            <div><p class="eyebrow"><span class="eyebrow-dot"></span>Kamis, 13 Agustus 2026</p><h1>Selamat pagi, <span>Nabila.</span></h1><p class="page-subtitle">Semua yang perlu kamu tahu untuk mengajar hari ini.</p></div>
+            <div class="page-actions"><button class="secondary-button" type="button" data-toast="Laporan aktivitas siap diunduh saat data sudah terhubung."><svg class="icon"><use href="#icon-download"></use></svg>Unduh laporan</button><button class="primary-button" id="open-task-modal" type="button"><svg class="icon"><use href="#icon-plus"></use></svg>Buat tugas</button></div>
+          </section>
+
+          <section class="focus-card" aria-labelledby="focus-title">
+            <div class="focus-content"><p class="focus-kicker"><span></span>Fokus hari ini</p><h2 id="focus-title">Tiga kelas menunggumu<br />hari ini.</h2><p class="focus-description">Mulai dari jadwal pertama, cek tugas yang masuk, lalu beri umpan balik terbaikmu.</p><div class="focus-actions"><button class="light-button" type="button" data-scroll-target="schedule-panel">Lihat agenda <svg class="icon"><use href="#icon-arrow"></use></svg></button><span class="focus-note"><span class="pulse-dot"></span>1 kelas sedang berlangsung</span></div></div>
+            <div class="focus-visual" aria-hidden="true"><div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div><div class="visual-calendar"><div class="calendar-topline"><span></span><span></span><span></span></div><div class="calendar-date">13 <small>AGT</small></div><div class="calendar-grid"><i></i><i></i><i></i><i class="marked"></i><i></i><i></i><i></i><i></i><i class="soft-marked"></i><i></i><i></i><i></i><i class="marked"></i><i></i><i></i><i></i><i class="soft-marked"></i><i></i><i></i><i></i><i></i></div></div><div class="floating-stat stat-students"><span class="floating-icon">+</span><strong>284</strong><small>siswa aktif</small></div><div class="floating-stat stat-classes"><span class="floating-icon check-icon">&#10003;</span><strong>94%</strong><small>tugas selesai</small></div></div>
+          </section>
+
+          <section class="metric-grid" aria-label="Ringkasan aktivitas">
+            <article class="metric-card metric-teal"><div class="metric-topline"><span class="metric-icon"><svg class="icon"><use href="#icon-file"></use></svg></span><span class="metric-trend positive">+2 <span>minggu ini</span></span></div><p class="metric-label">Tugas aktif</p><p class="metric-number">8 <span>tugas</span></p><div class="metric-footer"><span class="mini-dot dot-orange"></span>3 menunggu penilaian</div><div class="metric-progress"><span style="width: 68%"></span></div></article>
+            <article class="metric-card metric-purple"><div class="metric-topline"><span class="metric-icon"><svg class="icon"><use href="#icon-chart"></use></svg></span><span class="metric-trend positive">+4.8% <span>bulan ini</span></span></div><p class="metric-label">Rata-rata kelas</p><p class="metric-number">86.4 <span>/ 100</span></p><div class="metric-footer"><span class="mini-dot dot-purple"></span>Lebih tinggi dari target</div><div class="metric-progress purple-progress"><span style="width: 86%"></span></div></article>
+            <article class="metric-card metric-coral"><div class="metric-topline"><span class="metric-icon"><svg class="icon"><use href="#icon-users"></use></svg></span><span class="metric-trend neutral">Stabil <span>minggu ini</span></span></div><p class="metric-label">Siswa aktif</p><p class="metric-number">284 <span>siswa</span></p><div class="metric-footer"><span class="mini-dot dot-coral"></span>Dari 6 kelas yang kamu ajar</div><div class="metric-progress coral-progress"><span style="width: 78%"></span></div></article>
+            <article class="metric-card metric-blue"><div class="metric-topline"><span class="metric-icon"><svg class="icon"><use href="#icon-file"></use></svg></span><span class="metric-trend positive">+12 <span>hari ini</span></span></div><p class="metric-label">Pengumpulan baru</p><p class="metric-number">26 <span>jawaban</span></p><div class="metric-footer"><span class="mini-dot dot-blue"></span>9 perlu diperiksa</div><div class="metric-progress blue-progress"><span style="width: 54%"></span></div></article>
+          </section>
+
+          <div class="content-grid">
+            <section class="panel schedule-panel" id="schedule-panel" aria-labelledby="schedule-title">
+              <div class="panel-header"><div><p class="section-kicker">Jadwal hari ini</p><h2 id="schedule-title">Agenda Kamis, 13 Agustus</h2></div><button class="text-button" type="button" data-route="schedule">Lihat semua <svg class="icon"><use href="#icon-arrow"></use></svg></button></div>
+              <div class="schedule-summary"><div class="date-tile"><span>KAM</span><strong>13</strong></div><div class="summary-copy"><strong>4 sesi belajar</strong><span>08:00 - 15:30 WIB</span></div><div class="live-status"><span class="live-status-dot"></span>1 kelas berlangsung</div></div>
+              <div class="schedule-list">
+                <article class="schedule-row current"><div class="schedule-time"><strong>08:00</strong><span>09:30</span></div><div class="schedule-line"><span class="schedule-marker"></span></div><div class="schedule-detail"><div class="schedule-title-row"><strong>Matematika</strong><span class="status-pill current-pill">Berlangsung</span></div><h3>XII IPA 1</h3><p><svg class="icon"><use href="#icon-school"></use></svg>Ruang 203 <span class="detail-separator"></span>32 siswa</p></div></article>
+                <article class="schedule-row"><div class="schedule-time"><strong>10:00</strong><span>11:30</span></div><div class="schedule-line"><span class="schedule-marker"></span></div><div class="schedule-detail"><div class="schedule-title-row"><strong>Matematika</strong><span class="status-pill upcoming-pill">Berikutnya</span></div><h3>XI IPA 2</h3><p><svg class="icon"><use href="#icon-school"></use></svg>Ruang 201 <span class="detail-separator"></span>30 siswa</p></div></article>
+                <article class="schedule-row"><div class="schedule-time"><strong>13:00</strong><span>14:30</span></div><div class="schedule-line"><span class="schedule-marker"></span></div><div class="schedule-detail"><div class="schedule-title-row"><strong>Statistika</strong></div><h3>XII IPA 3</h3><p><svg class="icon"><use href="#icon-school"></use></svg>Ruang 204 <span class="detail-separator"></span>28 siswa</p></div></article>
+                <article class="schedule-row last-row"><div class="schedule-time"><strong>14:45</strong><span>15:30</span></div><div class="schedule-line"><span class="schedule-marker"></span></div><div class="schedule-detail"><div class="schedule-title-row"><strong>Wali Kelas</strong></div><h3>XII IPA 1</h3><p><svg class="icon"><use href="#icon-school"></use></svg>Ruang 203 <span class="detail-separator"></span>32 siswa</p></div></article>
+              </div>
+            </section>
+
+            <section class="panel announcement-panel" aria-labelledby="announcement-title">
+              <div class="panel-header"><div><p class="section-kicker">Dari sekolah</p><h2 id="announcement-title">Pengumuman terbaru</h2></div><button class="round-arrow" type="button" data-route="announcements" aria-label="Lihat semua pengumuman"><svg class="icon"><use href="#icon-arrow"></use></svg></button></div>
+              <article class="announcement-featured"><div class="announcement-art"><span class="art-sun"></span><span class="art-cloud cloud-one"></span><span class="art-cloud cloud-two"></span><span class="art-hill hill-back"></span><span class="art-hill hill-front"></span><span class="art-building"><i></i><i></i><i></i><i></i></span></div><div class="announcement-content"><span class="announcement-tag">Info sekolah</span><h3>Rapat guru bulanan</h3><p>Rapat koordinasi akan dilaksanakan Jumat, 14 Agustus pukul 15:30 di aula utama.</p><div class="announcement-meta"><span class="avatar avatar-small avatar-rust">AR</span><span>Andi Ramadhan</span><span class="meta-separator"></span><span>2 jam lalu</span></div></div></article>
+              <div class="announcement-list"><article class="announcement-row"><span class="announcement-index">02</span><div><strong>Pembaruan kalender akademik</strong><span>Admin sekolah <i></i>kemarin</span></div><svg class="icon"><use href="#icon-arrow"></use></svg></article><article class="announcement-row"><span class="announcement-index">03</span><div><strong>Pelatihan platform KelasHub</strong><span>Tim KelasHub <i></i>2 hari lalu</span></div><svg class="icon"><use href="#icon-arrow"></use></svg></article></div>
+            </section>
+          </div>
+
+          <div class="bottom-grid">
+            <section class="panel urgent-panel" aria-labelledby="urgent-title">
+              <div class="panel-header"><div><p class="section-kicker">Perlu perhatian</p><h2 id="urgent-title">Tugas yang mendesak</h2></div><button class="text-button" type="button" data-toast="Daftar tugas lengkap akan segera tersedia.">Kelola tugas <svg class="icon"><use href="#icon-arrow"></use></svg></button></div>
+              <div class="urgent-list">
+                <article class="urgent-row"><div class="assignment-icon assignment-teal"><svg class="icon"><use href="#icon-file"></use></svg></div><div class="assignment-copy"><strong>Persamaan Kuadrat</strong><span>XII IPA 1 <i></i>Matematika</span></div><div class="submission-progress"><div class="progress-label"><strong>26/32</strong><span>terkumpul</span></div><div class="thin-progress"><span style="width: 81%"></span></div></div><div class="due-date due-today"><span>Hari ini</span><strong>17:00</strong></div><button class="row-arrow" type="button" data-route="task-detail" aria-label="Buka Persamaan Kuadrat"><svg class="icon"><use href="#icon-arrow"></use></svg></button></article>
+                <article class="urgent-row"><div class="assignment-icon assignment-purple"><svg class="icon"><use href="#icon-chart"></use></svg></div><div class="assignment-copy"><strong>Statistika Deskriptif</strong><span>XI IPA 2 <i></i>Matematika</span></div><div class="submission-progress"><div class="progress-label"><strong>18/30</strong><span>terkumpul</span></div><div class="thin-progress purple-thin"><span style="width: 60%"></span></div></div><div class="due-date due-tomorrow"><span>Besok</span><strong>12:00</strong></div><button class="row-arrow" type="button" data-route="task-detail" aria-label="Buka Statistika Deskriptif"><svg class="icon"><use href="#icon-arrow"></use></svg></button></article>
+                <article class="urgent-row"><div class="assignment-icon assignment-coral"><svg class="icon"><use href="#icon-school"></use></svg></div><div class="assignment-copy"><strong>Refleksi Proyek Akhir</strong><span>XII IPA 3 <i></i>Wali kelas</span></div><div class="submission-progress"><div class="progress-label"><strong>21/28</strong><span>terkumpul</span></div><div class="thin-progress coral-thin"><span style="width: 75%"></span></div></div><div class="due-date due-tomorrow"><span>Besok</span><strong>15:30</strong></div><button class="row-arrow" type="button" data-route="task-detail" aria-label="Buka Refleksi Proyek Akhir"><svg class="icon"><use href="#icon-arrow"></use></svg></button></article>
+              </div>
+            </section>
+
+            <section class="panel activity-panel" aria-labelledby="activity-title">
+              <div class="panel-header"><div><p class="section-kicker">Jejak terbaru</p><h2 id="activity-title">Aktivitas terkini</h2></div><button class="round-arrow" type="button" data-toast="Riwayat aktivitas lengkap akan segera tersedia." aria-label="Lihat aktivitas lengkap"><svg class="icon"><use href="#icon-arrow"></use></svg></button></div>
+              <div class="activity-list"><article class="activity-row"><span class="avatar avatar-small avatar-blue">RP</span><div><p><strong>Raka Pratama</strong> mengumpulkan tugas <strong>Persamaan Kuadrat</strong></p><span>8 menit lalu <i class="activity-dot teal-dot"></i> XII IPA 1</span></div></article><article class="activity-row"><span class="avatar avatar-small avatar-yellow">SN</span><div><p><strong>Sarah Nabila</strong> mendapatkan nilai <strong>92</strong></p><span>24 menit lalu <i class="activity-dot purple-dot"></i> Statistika</span></div></article><article class="activity-row"><span class="avatar avatar-small avatar-green">FA</span><div><p><strong>Fajar Ahmad</strong> mengumpulkan tugas <strong>Persamaan Kuadrat</strong></p><span>1 jam lalu <i class="activity-dot coral-dot"></i> XII IPA 1</span></div></article><article class="activity-row"><span class="activity-system"><svg class="icon"><use href="#icon-grid"></use></svg></span><div><p><strong>Admin sekolah</strong> memperbarui jadwal <strong>Jumat</strong></p><span>2 jam lalu <i class="activity-dot blue-dot"></i> Sistem</span></div></article></div>
+            </section>
+          </div>
+
+          <footer class="main-footer"><span><span class="footer-pulse"></span>Semua sistem berjalan normal</span><span>Data terakhir diperbarui 2 menit lalu</span></footer>
+        </main>
+
+        <main class="main-content dynamic-page" id="dynamic-page" hidden></main>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="task-modal" hidden>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-header"><div><p class="section-kicker">Tugas baru</p><h2 id="modal-title">Buat tugas</h2></div><button class="modal-close" id="close-task-modal" type="button" aria-label="Tutup dialog"><svg class="icon"><use href="#icon-close"></use></svg></button></div>
+        <form id="task-form">
+          <label class="form-field"><span>Judul tugas</span><input type="text" name="title" placeholder="Contoh: Latihan Persamaan Kuadrat" required /></label>
+          <div class="form-row"><label class="form-field"><span>Kelas</span><select name="class" required><option value="">Pilih kelas</option><option>XII IPA 1</option><option>XI IPA 2</option><option>XII IPA 3</option></select></label><label class="form-field"><span>Tenggat waktu</span><input type="datetime-local" name="due" required /></label></div>
+          <label class="form-field"><span>Instruksi <small>(opsional)</small></span><textarea name="description" rows="4" placeholder="Tulis instruksi singkat untuk siswa..."></textarea></label>
+          <div class="modal-footer"><button class="secondary-button" id="cancel-task-modal" type="button">Batal</button><button class="primary-button" type="submit">Simpan tugas</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

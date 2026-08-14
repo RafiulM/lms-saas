@@ -1,0 +1,5 @@
+.DS_Store
+.claude/
+.testsprite/
+test-results/
+node_modules/
