@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, Icon } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { authClient } from "@/lib/auth-client";
@@ -10,30 +10,37 @@ import { registerSchool } from "@/lib/actions/school";
 
 export function AuthPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useApp();
   const [mode, setMode] = useState<"Masuk" | "Daftar sekolah">("Masuk");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [adminName, setAdminName] = useState("");
-  const [schoolName, setSchoolName] = useState("");
   const [loading, setLoading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
-  }, []);
+    if (searchParams.get("error")) {
+      showToast("Email atau kata sandi salah.");
+    }
+  }, [searchParams, showToast]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
     setLoading(true);
     try {
       if (mode === "Masuk") {
+        const email = String(form.get("email") ?? "");
+        const password = String(form.get("password") ?? "");
         const res = await authClient.signIn.email({ email, password });
         if (res.error) throw new Error(res.error.message ?? "Email atau kata sandi salah.");
         showToast("Berhasil masuk. Selamat datang kembali!");
         router.push("/");
         router.refresh();
       } else {
+        const schoolName = String(form.get("schoolName") ?? "");
+        const adminName = String(form.get("adminName") ?? "");
+        const email = String(form.get("email") ?? "");
+        const password = String(form.get("password") ?? "");
         await registerSchool({ name: schoolName, email, password, adminName });
         showToast("Sekolah berhasil didaftarkan! Kamu sudah masuk sebagai admin.");
         router.push("/");
@@ -69,35 +76,34 @@ export function AuthPage() {
         </section>
         <section className="panel auth-card">
           <div className="auth-tabs">
-            <button type="button" disabled={!hydrated} className={mode === "Masuk" ? "active" : ""} onClick={() => setMode("Masuk")}>Masuk</button>
-            <button type="button" disabled={!hydrated} className={mode === "Daftar sekolah" ? "active" : ""} onClick={() => setMode("Daftar sekolah")}>Daftar sekolah</button>
+            <button type="button" className={mode === "Masuk" ? "active" : ""} onClick={() => setMode("Masuk")}>Masuk</button>
+            <button type="button" className={mode === "Daftar sekolah" ? "active" : ""} onClick={() => setMode("Daftar sekolah")}>Daftar sekolah</button>
           </div>
           <p className="section-kicker">{mode === "Masuk" ? "Selamat datang kembali" : "Mulai bersama KelasHub"}</p>
           <h2>{mode === "Masuk" ? "Masuk ke KelasHub" : "Daftarkan sekolahmu"}</h2>
           <p className="auth-description">
             {mode === "Masuk" ? "Gunakan email sekolah untuk melanjutkan." : "Isi data sekolah untuk membuat akun admin pertama."}
           </p>
-          <form onSubmit={handleSubmit}>
-            <fieldset className="auth-fieldset" disabled={!hydrated}>
+          <form onSubmit={handleSubmit} action={mode === "Masuk" ? "/api/login" : undefined} method="post">
             {mode === "Daftar sekolah" ? (
               <>
                 <label className="form-field">
                   <span>Nama sekolah</span>
-                  <input type="text" placeholder="Contoh: SMA Negeri 5 Bandung" value={schoolName} onChange={(event) => setSchoolName(event.target.value)} required />
+                  <input type="text" name="schoolName" placeholder="Contoh: SMA Negeri 5 Bandung" required />
                 </label>
                 <label className="form-field">
                   <span>Nama admin</span>
-                  <input type="text" placeholder="Nama kepala sekolah atau admin" value={adminName} onChange={(event) => setAdminName(event.target.value)} required />
+                  <input type="text" name="adminName" placeholder="Nama kepala sekolah atau admin" required />
                 </label>
               </>
             ) : null}
             <label className="form-field">
               <span>Email sekolah</span>
-              <input type="email" placeholder="nama@sekolah.sch.id" value={email} onChange={(event) => setEmail(event.target.value)} required />
+              <input type="email" name="email" placeholder="nama@sekolah.sch.id" required />
             </label>
             <label className="form-field">
               <span>Kata sandi</span>
-              <input type="password" placeholder="Masukkan kata sandi" value={password} onChange={(event) => setPassword(event.target.value)} required />
+              <input type="password" name="password" placeholder="Masukkan kata sandi" required />
             </label>
             {mode === "Masuk" ? (
               <div className="auth-options">
@@ -105,10 +111,9 @@ export function AuthPage() {
                 <button type="button" onClick={() => showToast("Reset kata sandi akan segera tersedia.")}>Lupa kata sandi?</button>
               </div>
             ) : null}
-            <button className="primary-button auth-submit" type="submit" disabled={loading || !hydrated}>
+            <button className="primary-button auth-submit" type="submit" disabled={loading}>
               {loading ? "Memproses…" : mode === "Masuk" ? "Masuk" : "Daftar sekolah"} <Icon name="arrow" />
             </button>
-            </fieldset>
           </form>
           <p className="auth-footer">
             {mode === "Masuk" ? "Belum punya akun sekolah? " : "Sudah punya akun? "}
