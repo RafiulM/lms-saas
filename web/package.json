@@ -10,6 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx db/seed.ts",
+    "db:seed:school": "tsx db/seed-school.ts",
     "db:seed:mayar": "tsx db/seed-mayar.ts",
     "db:studio": "drizzle-kit studio"
   },
