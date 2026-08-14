@@ -2,16 +2,16 @@ import { drizzle } from "drizzle-orm/libsql";
 import { createClient } from "@libsql/client";
 import * as schema from "@/db/schema";
 
+const dbUrl = process.env.DATABASE_URL ?? "file:data/lms.db";
+
 const client = createClient({
-  url: process.env.DATABASE_URL ?? "file:data/lms.db",
+  url: dbUrl,
   authToken: process.env.DATABASE_AUTH_TOKEN,
 });
 
-try {
-  client.execute("PRAGMA journal_mode = WAL");
-  client.execute("PRAGMA foreign_keys = ON");
-} catch {
-  // pragmas only apply to local file databases
+if (dbUrl.startsWith("file:")) {
+  void client.execute("PRAGMA journal_mode = WAL").catch(() => {});
+  void client.execute("PRAGMA foreign_keys = ON").catch(() => {});
 }
 
 export const db = drizzle({ client, schema });
