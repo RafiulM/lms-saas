@@ -1,15 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
 import type { Role } from "@/lib/types";
 import { TaskModal } from "@/components/TaskModal";
-import { getServerSnapshot, getSnapshotRole, subscribe as subscribeRole, setRole as persistRole, useStoredRole } from "@/lib/role-store";
 import { useCurrentUser, type CurrentUser } from "@/lib/auth-client";
 
 interface AppContextValue {
   role: Role;
-  setRole: (role: Role) => void;
-  toggleRole: () => void;
   showToast: (message: string) => void;
   openTaskModal: () => void;
   closeTaskModal: () => void;
@@ -19,24 +16,13 @@ interface AppContextValue {
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const toggledRole = useSyncExternalStore(subscribeRole, getSnapshotRole, getServerSnapshot);
-  const storedRole = useStoredRole();
   const { user } = useCurrentUser();
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const toastTimer = useRef<number | null>(null);
   const [toastMessage, setToastMessage] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
 
-  const backendRole: Role | null = user ? (user.role === "student" ? "student" : "teacher") : null;
-  const role: Role = storedRole ?? backendRole ?? "teacher";
-
-  const setRole = useCallback((nextRole: Role) => {
-    persistRole(nextRole);
-  }, []);
-
-  const toggleRole = useCallback(() => {
-    persistRole(role === "teacher" ? "student" : "teacher");
-  }, [role]);
+  const role: Role = user ? (user.role === "student" ? "student" : "teacher") : "teacher";
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -49,7 +35,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const closeTaskModal = useCallback(() => setTaskModalOpen(false), []);
 
   return (
-    <AppContext.Provider value={{ role, setRole, toggleRole, showToast, openTaskModal, closeTaskModal, user }}>
+    <AppContext.Provider value={{ role, showToast, openTaskModal, closeTaskModal, user }}>
       {children}
       <TaskModal open={taskModalOpen} onClose={closeTaskModal} />
       <div

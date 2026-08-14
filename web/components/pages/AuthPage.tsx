@@ -2,22 +2,19 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Avatar, Icon } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { authClient } from "@/lib/auth-client";
 import { registerSchool } from "@/lib/actions/school";
 
 export function AuthPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useApp();
   const [mode, setMode] = useState<"Masuk" | "Daftar sekolah">("Masuk");
   const [loading, setLoading] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setHydrated(true);
     if (searchParams.get("error")) {
       showToast("Email atau kata sandi salah.");
     }
@@ -34,8 +31,7 @@ export function AuthPage() {
         const res = await authClient.signIn.email({ email, password });
         if (res.error) throw new Error(res.error.message ?? "Email atau kata sandi salah.");
         showToast("Berhasil masuk. Selamat datang kembali!");
-        router.push("/");
-        router.refresh();
+        window.location.assign("/");
       } else {
         const schoolName = String(form.get("schoolName") ?? "");
         const adminName = String(form.get("adminName") ?? "");
@@ -43,8 +39,7 @@ export function AuthPage() {
         const password = String(form.get("password") ?? "");
         await registerSchool({ name: schoolName, email, password, adminName });
         showToast("Sekolah berhasil didaftarkan! Kamu sudah masuk sebagai admin.");
-        router.push("/");
-        router.refresh();
+        window.location.assign("/");
       }
     } catch (error) {
       showToast(error instanceof Error ? error.message : "Terjadi kesalahan. Silakan coba lagi.");

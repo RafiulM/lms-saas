@@ -183,8 +183,7 @@ function Topbar({
   data: ShellData;
   effectiveRole: Role;
 }) {
-  const { toggleRole, showToast } = useApp();
-  const router = useRouter();
+  const { showToast } = useApp();
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
   const profileRef = useRef<HTMLDivElement>(null);
@@ -226,11 +225,6 @@ function Topbar({
           <Icon name="bell" />
           <span className="notification-dot"></span>
         </button>
-        <button className="role-switcher" type="button" aria-label="Ganti mode tampilan" onClick={toggleRole}>
-          <span className="role-switcher-dot"></span>
-          <span>{roleLabel}</span>
-          <Icon name="chevron" />
-        </button>
         <div className="profile-wrap" ref={profileRef}>
           <button className="profile-button" type="button" aria-expanded={profileOpen} aria-controls="profile-menu" onClick={() => setProfileOpen((open) => !open)}>
             <Avatar initials={initials} tone="profile" />
@@ -245,9 +239,6 @@ function Topbar({
               </div>
               <Link href="/profil" onClick={() => setProfileOpen(false)}><Icon name="user" />Profil saya</Link>
               <Link href="/pengaturan" onClick={() => setProfileOpen(false)}><Icon name="settings" />Pengaturan akun</Link>
-              <button type="button" onClick={() => { setProfileOpen(false); toggleRole(); }}>
-                <Icon name="users" /><span>{isStudent ? "Mode Guru" : "Mode Murid"}</span>
-              </button>
               <div className="profile-menu-divider"></div>
               <button
                 className="logout-button"
@@ -258,8 +249,7 @@ function Topbar({
                     await authClient.signOut();
                     showToast("Berhasil keluar. Sampai jumpa!");
                   }
-                  router.push("/masuk");
-                  router.refresh();
+                  window.location.assign("/masuk");
                 }}
               ><Icon name="logout" />Keluar</button>
             </div>
