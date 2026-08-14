@@ -5,6 +5,6 @@ export default defineConfig({
   schema: "./db/schema.ts",
   out: "./drizzle",
   dbCredentials: {
-    url: "./data/lms.db",
+    url: process.env.DATABASE_URL ?? "./data/lms.db",
   },
 });
