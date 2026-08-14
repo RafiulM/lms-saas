@@ -137,3 +137,18 @@ export function PageIntro({
 export function PageActions({ children }: { children: ReactNode }) {
   return <div className="page-actions">{children}</div>;
 }
+
+/** Indikator pemuatan standar: kerangka abu-abu berdenyut hingga respons server tiba. */
+export function PageLoading() {
+  return (
+    <div className="page-loading" role="status" aria-label="Memuat data">
+      <div className="loading-metrics">
+        <span className="skeleton skeleton-metric"></span>
+        <span className="skeleton skeleton-metric"></span>
+        <span className="skeleton skeleton-metric"></span>
+      </div>
+      <span className="skeleton skeleton-panel"></span>
+      <span className="skeleton skeleton-panel skeleton-panel-short"></span>
+    </div>
+  );
+}

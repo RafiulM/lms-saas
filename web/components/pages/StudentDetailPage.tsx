@@ -3,10 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Avatar, Icon, PageIntro, StatusPill } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { authClient } from "@/lib/auth-client";
-import { getStudent as getMockStudent } from "@/lib/data";
 import { getStudentDetail } from "@/lib/actions/grades";
 import { formatDateShort, initialsOf, letterGrade } from "@/lib/adapters";
 
@@ -80,25 +79,53 @@ function StudentEditModal({
 export function StudentDetailPage() {
   const { user: currentUser, showToast } = useApp();
   const params = useParams<{ id: string }>();
-  const mock = getMockStudent(params.id);
   const [live, setLive] = useState<Awaited<ReturnType<typeof getStudentDetail>>>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
+    let active = true;
     getStudentDetail(params.id)
-      .then((data) => data && setLive(data))
-      .catch(() => undefined);
+      .then((data) => {
+        if (!active) return;
+        if (data) {
+          setLive(data);
+          setNotFound(false);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [params.id]);
 
-  const student = live ?? {
-    id: mock.id,
-    name: mock.name,
-    email: `${mock.initials.toLowerCase()}@smkn5bdg.sch.id`,
-    joinedAt: new Date("2024-07-01"),
-    className: mock.className,
-    average: Number(mock.average),
-    subjects: mock.grades.map((g) => ({ subject: g.subject, task: g.task, exam: g.exam })),
-  };
+  if (loading) return <PageLoading />;
+
+  if (notFound || !live) {
+    return (
+      <>
+        <PageIntro
+          kicker="Profil murid"
+          title="Murid tidak ditemukan"
+          subtitle="Profil murid ini mungkin telah dihapus atau tidak tersedia untuk akunmu."
+          actions={
+            <Link className="secondary-button" href="/pengguna"><Icon name="arrow" />Kembali ke pengguna</Link>
+          }
+        />
+        <section className="panel">
+          <p className="empty-state">Murid tidak ditemukan. Periksa kembali daftar murid di halaman Pengguna.</p>
+        </section>
+      </>
+    );
+  }
+
+  const student = live;
 
   const firstName = student.name.split(" ")[0];
   const subjectRows = student.subjects.map((s) => {
@@ -115,7 +142,7 @@ export function StudentDetailPage() {
         subtitle={`${student.className} · Murid aktif`}
         actions={
           <>
-            <Link className="secondary-button" href="/kelas/xii-ipa-1"><Icon name="arrow" />Kembali ke kelas</Link>
+            <Link className="secondary-button" href="/pengguna"><Icon name="arrow" />Kembali ke pengguna</Link>
             <button className="primary-button" type="button" onClick={() => showToast("Fitur pesan akan segera tersedia.")}>
               <Icon name="megaphone" />Kirim pesan
             </button>
@@ -144,7 +171,7 @@ export function StudentDetailPage() {
         <section className="panel">
           <div className="panel-header">
             <div><p className="section-kicker">Ringkasan belajar</p><h2>Perkembangan {firstName}</h2></div>
-            <span className="soft-status"><span className="status-dot"></span>{live ? "Data dari database" : "Diperbarui hari ini"}</span>
+            <span className="soft-status"><span className="status-dot"></span>Data dari database</span>
           </div>
           <div className="student-kpi-grid">
             <div><strong>{student.average ?? "—"}</strong><span>rata-rata nilai</span><em>Terbaru</em></div>
@@ -155,10 +182,10 @@ export function StudentDetailPage() {
         <section className="panel feedback-panel">
           <p className="section-kicker">Catatan wali kelas</p>
           <h2>Perlu dipertahankan</h2>
-          <p>{live ? `${firstName} konsisten mengumpulkan tugas tepat waktu.` : mock.feedback.text}</p>
+          <p>{firstName} konsisten mengumpulkan tugas tepat waktu.</p>
           <div className="feedback-author">
             <Avatar initials="NR" tone="rust" />
-            <span>{live ? "Wali kelas" : mock.feedback.author}<small>{live ? "Catatan otomatis dari database" : `${mock.feedback.role} · ${mock.feedback.time}`}</small></span>
+            <span>Wali kelas<small>Catatan otomatis dari database</small></span>
           </div>
         </section>
       </div>
@@ -183,6 +210,9 @@ export function StudentDetailPage() {
             </tbody>
           </table>
         </div>
+        {!subjectRows.length ? (
+          <p className="empty-state">Belum ada nilai tercatat untuk murid ini.</p>
+        ) : null}
       </section>
 
       {editOpen && live ? (

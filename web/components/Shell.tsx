@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon, Avatar, type IconName } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
@@ -102,7 +103,8 @@ function Sidebar({
   const pathname = usePathname();
   const groups = effectiveRole === "student" ? studentNavGroups : teacherNavGroups;
   const schoolName = data.school?.name ?? "Sekolah";
-  const schoolLogo = data.school?.logo ? null : schoolInitials(schoolName);
+  const schoolLogo = data.school?.logo ?? null;
+  const schoolInitialsMark = schoolLogo ? null : schoolInitials(schoolName);
 
   const badgeCount = (href: string): number | undefined => {
     if (href === "/") return data.counts.beranda || undefined;
@@ -128,7 +130,11 @@ function Sidebar({
         </div>
 
         <div className="school-switcher">
-          <div className="school-logo">{schoolLogo ?? "S5"}</div>
+          {schoolLogo ? (
+            <Image className="school-logo school-logo-img" src={schoolLogo} alt={`Logo ${schoolName}`} width={33} height={33} unoptimized />
+          ) : (
+            <div className="school-logo">{schoolInitialsMark}</div>
+          )}
           <div className="school-copy"><strong>{schoolName}</strong><span>Sekolah aktif</span></div>
           <button className="switcher-button" type="button" aria-label="Ganti sekolah">
             <Icon name="chevron" />
@@ -189,15 +195,15 @@ function Topbar({
   const profileRef = useRef<HTMLDivElement>(null);
 
   const isStudent = effectiveRole === "student";
-  const name = data.user?.name ?? (isStudent ? "Raka Pratama" : "Nabila Rahma");
+  const name = data.user?.name ?? "Pengguna";
   const initials = (name.split(" ").map((part) => part[0]).join("").slice(0, 2) || "GU").toUpperCase();
   const roleLabel = data.user
-    ? { admin: "Admin", teacher: "Guru", student: "Murid" }[data.user.role] ?? "Murid"
+    ? { admin: "Admin", teacher: "Guru", student: "Murid" }[data.user.role] ?? "Pengguna"
     : isStudent
       ? "Murid"
       : "Guru";
-  const email = data.user?.email ?? (isStudent ? "raka.pratama@sman5bdg.sch.id" : "nabila@sman5bdg.sch.id");
-  const schoolName = data.school?.name ?? "SMA Negeri 5 Bandung";
+  const email = data.user?.email ?? "—";
+  const schoolName = data.school?.name ?? "Sekolah";
 
   useEffect(() => {
     if (!profileOpen) return;

@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Icon, PageIntro } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { announcements as mockAnnouncements } from "@/lib/data";
 import { createAnnouncement, deleteAnnouncement, listAnnouncements } from "@/lib/actions/announcements";
 import { formatTimeAgo, initialsOf } from "@/lib/adapters";
 import type { Announcement } from "@/lib/types";
@@ -91,7 +90,7 @@ function Composer({ onDone }: { onDone: () => void }) {
 function TeacherAnnouncements({ live }: { live: LiveItem[] | null }) {
   const { showToast } = useApp();
   const router = useRouter();
-  const items = live ? live.map(toAnnouncement) : mockAnnouncements;
+  const items = live ? live.map(toAnnouncement) : [];
   const featured = items[0];
 
   const handleDelete = async (id: string) => {
@@ -145,6 +144,9 @@ function TeacherAnnouncements({ live }: { live: LiveItem[] | null }) {
               </div>
             </article>
           ))}
+          {!items.length ? (
+            <p className="empty-state">Belum ada pengumuman. Bagikan kabar pertama lewat kartu &quot;Akses cepat&quot; di samping.</p>
+          ) : null}
         </section>
         <Composer onDone={() => router.refresh()} />
       </div>
@@ -154,7 +156,7 @@ function TeacherAnnouncements({ live }: { live: LiveItem[] | null }) {
 
 function StudentAnnouncements({ live }: { live: LiveItem[] | null }) {
   const { showToast } = useApp();
-  const items = live ? live.map(toAnnouncement) : mockAnnouncements;
+  const items = live ? live.map(toAnnouncement) : [];
 
   return (
     <>
@@ -185,6 +187,9 @@ function StudentAnnouncements({ live }: { live: LiveItem[] | null }) {
               </div>
             </Link>
           ))}
+          {!items.length ? (
+            <p className="empty-state">Belum ada pengumuman dari sekolah.</p>
+          ) : null}
         </section>
         <aside className="panel news-calendar">
           <p className="section-kicker">Kalender sekolah</p>
@@ -202,12 +207,23 @@ function StudentAnnouncements({ live }: { live: LiveItem[] | null }) {
 export function AnnouncementsPage() {
   const { role } = useApp();
   const [live, setLive] = useState<LiveItem[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listAnnouncements().then((data) => {
-      if (data) setLive(data.announcements);
-    });
+    let active = true;
+    listAnnouncements()
+      .then((data) => {
+        if (data && active) setLive(data.announcements);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
+  if (loading) return <PageLoading />;
   return role === "student" ? <StudentAnnouncements live={live} /> : <TeacherAnnouncements live={live} />;
 }

@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Icon, MetricCard, PageIntro, StatusPill } from "@/components/ui";
+import { Icon, MetricCard, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { studentTasks, teacherTasks } from "@/lib/data";
 import { listAssignments, listStudentAssignments } from "@/lib/actions/assignments";
 import { adaptTask } from "@/lib/adapters";
 import type { Task, TaskStatus } from "@/lib/types";
@@ -24,11 +23,11 @@ function taskPill(status: TaskStatus): "current" | "upcoming" | "done" {
 const fillTone: Record<Task["tone"], string> = { teal: "teal-fill", purple: "purple-fill", coral: "coral-fill", blue: "blue-fill", orange: "orange-fill" };
 const cardIcon: Record<Task["tone"], "file" | "chart" | "school"> = { teal: "file", purple: "chart", coral: "school", blue: "file", orange: "file" };
 
-function TeacherTasks({ live }: { live: Task[] | null }) {
+function TeacherTasks({ live }: { live: Task[] }) {
   const { openTaskModal } = useApp();
   const [tab, setTab] = useState("Semua tugas");
   const tabs = ["Semua tugas", "Perlu dinilai", "Selesai"];
-  const tasks = live ?? teacherTasks;
+  const tasks = live;
   const counts: Record<string, number> = {
     "Semua tugas": tasks.length,
     "Perlu dinilai": tasks.filter((task) => task.status === "Perlu dinilai").length,
@@ -50,9 +49,9 @@ function TeacherTasks({ live }: { live: Task[] | null }) {
         }
       />
       <section className="metric-grid compact-metrics">
-        <MetricCard tone="teal" label="Tugas aktif" value={<>{tasks.length} <span>tugas</span></>} detail={`${pending} perlu perhatian`} trend={live ? "Terbaru" : "+2 minggu ini"} />
-        <MetricCard tone="purple" label="Menunggu dinilai" value={<>{pending} <span>tugas</span></>} detail="Dari semua kelas" trend={live ? "Hari ini" : "Hari ini"} />
-        <MetricCard tone="coral" label="Tingkat selesai" value={<>{tasks.length ? `${Math.round((tasks.filter((t) => t.status === "Selesai").length / tasks.length) * 100)}%` : "—"}</>} detail={live ? "Dari tugas aktif" : "Naik 6% bulan ini"} trend="Terbaru" />
+        <MetricCard tone="teal" label="Tugas aktif" value={<>{tasks.length} <span>tugas</span></>} detail={`${pending} perlu perhatian`} trend="Terbaru" />
+        <MetricCard tone="purple" label="Menunggu dinilai" value={<>{pending} <span>tugas</span></>} detail="Dari semua kelas" trend="Hari ini" />
+        <MetricCard tone="coral" label="Tingkat selesai" value={<>{tasks.length ? `${Math.round((tasks.filter((t) => t.status === "Selesai").length / tasks.length) * 100)}%` : "—"}</>} detail="Dari tugas aktif" trend="Terbaru" />
       </section>
       <section className="panel table-panel">
         <div className="table-toolbar">
@@ -90,13 +89,16 @@ function TeacherTasks({ live }: { live: Task[] | null }) {
             </tbody>
           </table>
         </div>
+        {!tasks.length ? (
+          <p className="empty-state">Belum ada tugas. Buat tugas pertama untuk kelasmu.</p>
+        ) : null}
       </section>
     </>
   );
 }
 
-function StudentTasks({ live }: { live: Task[] | null }) {
-  const tasks = live ?? studentTasks;
+function StudentTasks({ live }: { live: Task[] }) {
+  const tasks = live;
   const todo = tasks.filter((task) => task.status === "Belum dikerjakan").length;
   const doing = tasks.filter((task) => task.status === "Sedang dikerjakan").length;
   const done = tasks.filter((task) => task.status === "Sudah dikumpulkan" || task.status === "Selesai").length;
@@ -112,9 +114,9 @@ function StudentTasks({ live }: { live: Task[] | null }) {
         }
       />
       <section className="metric-grid compact-metrics student-task-stats">
-        <MetricCard tone="coral" label="Belum dikerjakan" value={<>{todo} <span>tugas</span></>} detail={live ? "Perlu segera dikerjakan" : "1 jatuh tempo hari ini"} />
+        <MetricCard tone="coral" label="Belum dikerjakan" value={<>{todo} <span>tugas</span></>} detail="Perlu segera dikerjakan" />
         <MetricCard tone="purple" label="Sedang dikerjakan" value={<>{doing} <span>tugas</span></>} detail="Teruskan progresmu" />
-        <MetricCard tone="teal" label="Sudah selesai" value={<>{done} <span>tugas</span></>} detail={live ? "Dari tugas aktif" : "82% minggu ini"} />
+        <MetricCard tone="teal" label="Sudah selesai" value={<>{done} <span>tugas</span></>} detail="Dari tugas aktif" />
       </section>
       <section className="student-task-cards">
         {tasks.map((task) => (
@@ -132,6 +134,9 @@ function StudentTasks({ live }: { live: Task[] | null }) {
             </div>
           </Link>
         ))}
+        {!tasks.length ? (
+          <p className="empty-state">Belum ada tugas untuk kelasmu.</p>
+        ) : null}
       </section>
     </>
   );
@@ -141,12 +146,17 @@ export function TasksPage() {
   const { role } = useApp();
   const [teacherLive, setTeacherLive] = useState<Task[] | null>(null);
   const [studentLive, setStudentLive] = useState<Task[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+    const finish = () => {
+      if (active) setLoading(false);
+    };
     if (role === "teacher") {
       listAssignments()
         .then((data) => {
-          if (!data) return;
+          if (!data || !active) return;
           setTeacherLive(
             data.assignments.map((a) =>
               adaptTask(a, {
@@ -156,11 +166,12 @@ export function TasksPage() {
             ),
           );
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(finish);
     } else {
       listStudentAssignments()
         .then((data) => {
-          if (!data) return;
+          if (!data || !active) return;
           setStudentLive(
             data.assignments.map((a) =>
               adaptTask(a, {
@@ -170,9 +181,14 @@ export function TasksPage() {
             ),
           );
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(finish);
     }
+    return () => {
+      active = false;
+    };
   }, [role]);
 
-  return role === "student" ? <StudentTasks live={studentLive} /> : <TeacherTasks live={teacherLive} />;
+  if (loading) return <PageLoading />;
+  return role === "student" ? <StudentTasks live={studentLive ?? []} /> : <TeacherTasks live={teacherLive ?? []} />;
 }

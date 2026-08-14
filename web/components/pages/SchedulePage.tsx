@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Icon, PageIntro } from "@/components/ui";
+import { Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { deleteSchedule, getScheduleGrid, getScheduleOptions, upsertSchedule } from "@/lib/actions/schedules";
 import type { Tone } from "@/lib/types";
@@ -26,76 +26,6 @@ interface WeekRow {
 }
 
 type ScheduleOptions = Awaited<ReturnType<typeof getScheduleOptions>>;
-
-const mockTeacherRows: WeekRow[] = [
-  {
-    time: "07:00",
-    cells: [
-      { id: "m1", subject: "Matematika", small: "XII IPA 1", time: "07:30 - 09:00", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 1, startTime: "07:30", endTime: "09:00" },
-      { id: "m2", subject: "Aljabar", small: "XI IPA 2", time: "07:30 - 09:00", tone: "purple", classId: "", subjectId: "", teacherId: null, dayOfWeek: 2, startTime: "07:30", endTime: "09:00" },
-      { id: "m3", subject: "Matematika", small: "XII IPA 1", time: "08:00 - 09:30", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "08:00", endTime: "09:30" },
-      { id: "m4", subject: "Statistika", small: "XII IPA 3", time: "07:30 - 09:00", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 4, startTime: "07:30", endTime: "09:00" },
-      null,
-    ],
-  },
-  {
-    time: "10:00",
-    cells: [
-      { id: "m5", subject: "Matematika", small: "XI IPA 1", time: "10:00 - 11:30", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 1, startTime: "10:00", endTime: "11:30" },
-      null,
-      { id: "m6", subject: "Matematika", small: "XI IPA 2", time: "10:00 - 11:30", tone: "purple", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "10:00", endTime: "11:30" },
-      { id: "m7", subject: "Matematika", small: "XII IPA 1", time: "10:00 - 11:30", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 4, startTime: "10:00", endTime: "11:30" },
-      { id: "m8", subject: "Remedial", small: "XI IPA 2", time: "10:00 - 11:00", tone: "blue", classId: "", subjectId: "", teacherId: null, dayOfWeek: 5, startTime: "10:00", endTime: "11:00" },
-    ],
-  },
-  {
-    time: "13:00",
-    cells: [
-      null,
-      { id: "m9", subject: "Statistika", small: "XII IPA 3", time: "13:00 - 14:30", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 2, startTime: "13:00", endTime: "14:30" },
-      { id: "m10", subject: "Statistika", small: "XII IPA 3", time: "13:00 - 14:30", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "13:00", endTime: "14:30" },
-      null,
-      { id: "m11", subject: "Wali Kelas", small: "XII IPA 1", time: "13:00 - 14:00", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 5, startTime: "13:00", endTime: "14:00" },
-    ],
-  },
-  {
-    time: "15:00",
-    cells: [null, null, { id: "m12", subject: "Wali Kelas", small: "XII IPA 1", time: "14:45 - 15:30", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "14:45", endTime: "15:30" }, null, null],
-  },
-];
-
-const mockStudentRows: WeekRow[] = [
-  {
-    time: "07:00",
-    cells: [
-      { id: "s1", subject: "Bahasa Inggris", small: "Bu Rina", time: "07:30 - 09:00", tone: "blue", classId: "", subjectId: "", teacherId: null, dayOfWeek: 1, startTime: "07:30", endTime: "09:00" },
-      { id: "s2", subject: "Kimia", small: "Pak Arif", time: "07:30 - 09:00", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 2, startTime: "07:30", endTime: "09:00" },
-      { id: "s3", subject: "Matematika", small: "Bu Nabila", time: "08:00 - 09:30", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "08:00", endTime: "09:30" },
-      { id: "s4", subject: "Sejarah", small: "Bu Maya", time: "07:30 - 09:00", tone: "purple", classId: "", subjectId: "", teacherId: null, dayOfWeek: 4, startTime: "07:30", endTime: "09:00" },
-      { id: "s5", subject: "Agama", small: "Pak Yudi", time: "07:30 - 09:00", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 5, startTime: "07:30", endTime: "09:00" },
-    ],
-  },
-  {
-    time: "10:00",
-    cells: [
-      { id: "s6", subject: "Fisika", small: "Pak Dedi", time: "10:00 - 11:30", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 1, startTime: "10:00", endTime: "11:30" },
-      { id: "s7", subject: "Biologi", small: "Bu Tia", time: "10:00 - 11:30", tone: "blue", classId: "", subjectId: "", teacherId: null, dayOfWeek: 2, startTime: "10:00", endTime: "11:30" },
-      { id: "s8", subject: "Fisika", small: "Pak Dedi", time: "10:00 - 11:30", tone: "blue", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "10:00", endTime: "11:30" },
-      { id: "s9", subject: "Kimia", small: "Pak Arif", time: "10:00 - 11:30", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 4, startTime: "10:00", endTime: "11:30" },
-      { id: "s10", subject: "Matematika", small: "Bu Nabila", time: "10:00 - 11:30", tone: "teal", classId: "", subjectId: "", teacherId: null, dayOfWeek: 5, startTime: "10:00", endTime: "11:30" },
-    ],
-  },
-  {
-    time: "13:00",
-    cells: [
-      { id: "s11", subject: "Seni Budaya", small: "Bu Wulan", time: "13:00 - 14:30", tone: "purple", classId: "", subjectId: "", teacherId: null, dayOfWeek: 1, startTime: "13:00", endTime: "14:30" },
-      { id: "s12", subject: "Bahasa Indonesia", small: "Bu Sari", time: "13:00 - 14:30", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 2, startTime: "13:00", endTime: "14:30" },
-      { id: "s13", subject: "Bahasa Indonesia", small: "Bu Sari", time: "13:00 - 14:30", tone: "coral", classId: "", subjectId: "", teacherId: null, dayOfWeek: 3, startTime: "13:00", endTime: "14:30" },
-      { id: "s14", subject: "PPKN", small: "Pak Hendra", time: "13:00 - 14:30", tone: "purple", classId: "", subjectId: "", teacherId: null, dayOfWeek: 4, startTime: "13:00", endTime: "14:30" },
-      { id: "s15", subject: "Proyek kelas", small: "Bu Nabila", time: "13:00 - 14:30", tone: "orange", classId: "", subjectId: "", teacherId: null, dayOfWeek: 5, startTime: "13:00", endTime: "14:30" },
-    ],
-  },
-];
 
 function buildRows(schedules: { id: string; dayOfWeek: number; startTime: string; endTime: string; subject: string; className: string; tone: string; teacher: string; classId: string; subjectId: string; teacherId: string | null }[], isStudent: boolean): WeekRow[] {
   const times = [...new Set(schedules.map((s) => s.startTime))].sort();
@@ -321,7 +251,7 @@ function WeeklyGrid({
 
 function TeacherSchedule({ live, onRefetch }: { live: Awaited<ReturnType<typeof getScheduleGrid>>; onRefetch: () => void }) {
   const [modal, setModal] = useState<{ schedule: WeekBlock | null; day: number } | null>(null);
-  const rows = live ? buildRows(live.schedules, false) : mockTeacherRows;
+  const rows = live ? buildRows(live.schedules, false) : [];
 
   return (
     <>
@@ -349,13 +279,16 @@ function TeacherSchedule({ live, onRefetch }: { live: Awaited<ReturnType<typeof 
       <section className="panel schedule-board">
         <div className="panel-header">
           <div><p className="section-kicker">Kalender mingguan</p><h2>Jadwal mengajar</h2></div>
-          <span className="soft-status"><span className="status-dot"></span>{live ? "Data dari database" : "Terakhir disimpan 10 menit lalu"}</span>
+          <span className="soft-status"><span className="status-dot"></span>Data dari database</span>
         </div>
         <WeeklyGrid
           rows={rows}
           onAdd={(day, time) => setModal({ schedule: null, day })}
           onEdit={(schedule) => setModal({ schedule, day: schedule.dayOfWeek })}
         />
+        {!rows.length ? (
+          <p className="empty-state">Belum ada jadwal untuk minggu ini. Gunakan tombol &quot;Buat jadwal&quot; untuk menambahkan sesi mengajar.</p>
+        ) : null}
       </section>
       {modal ? (
         <ScheduleModal
@@ -370,8 +303,8 @@ function TeacherSchedule({ live, onRefetch }: { live: Awaited<ReturnType<typeof 
 }
 
 function StudentSchedule({ live }: { live: Awaited<ReturnType<typeof getScheduleGrid>> }) {
-  const rows = live ? buildRows(live.schedules, true) : mockStudentRows;
-  const myClass = live?.myClassName || "XI IPA 2";
+  const rows = live ? buildRows(live.schedules, true) : [];
+  const myClass = live?.myClassName || "Kelas";
 
   return (
     <>
@@ -395,9 +328,12 @@ function StudentSchedule({ live }: { live: Awaited<ReturnType<typeof getSchedule
       <section className="panel schedule-board student-schedule-board">
         <div className="panel-header">
           <div><p className="section-kicker">Kelas {myClass}</p><h2>Jadwal mingguan</h2></div>
-          <span className="room-note">{live ? "Jadwal kelas dari database" : "Wali kelas: Bu Nabila Rahma"}</span>
+          <span className="room-note">Jadwal kelas dari database</span>
         </div>
         <WeeklyGrid rows={rows} isStudent />
+        {!rows.length ? (
+          <p className="empty-state">Belum ada jadwal untuk kelasmu minggu ini.</p>
+        ) : null}
       </section>
     </>
   );
@@ -406,17 +342,22 @@ function StudentSchedule({ live }: { live: Awaited<ReturnType<typeof getSchedule
 export function SchedulePage() {
   const { role } = useApp();
   const [live, setLive] = useState<Awaited<ReturnType<typeof getScheduleGrid>>>(null);
+  const [loading, setLoading] = useState(true);
 
   const refetch = () => {
-    getScheduleGrid().then((data) => {
-      if (data) setLive(data);
-    });
+    getScheduleGrid()
+      .then((data) => {
+        if (data) setLive(data);
+      })
+      .catch(() => undefined)
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     refetch();
   }, []);
 
+  if (loading) return <PageLoading />;
   return role === "student" ? (
     <StudentSchedule live={live} />
   ) : (

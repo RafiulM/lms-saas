@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Icon, MetricCard, PageIntro, StatusPill } from "@/components/ui";
+import { Avatar, Icon, MetricCard, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { students as mockStudents } from "@/lib/data";
 import { bulkInputGrades, exportGradesCsv, getClassRoster, getGradeRecap, getMyGrades } from "@/lib/actions/grades";
 import { listClasses } from "@/lib/actions/classes";
 import { listSubjects } from "@/lib/actions/subjects";
@@ -20,42 +19,57 @@ function TeacherGrades() {
   const [subjectId, setSubjectId] = useState("");
   const [roster, setRoster] = useState<{ id: string; name: string }[]>([]);
   const [recapState, setRecap] = useState<Awaited<ReturnType<typeof getGradeRecap>>>(null);
+  const [ready, setReady] = useState(false);
   const [entering, setEntering] = useState(false);
   const [gradeType, setGradeType] = useState<"task" | "exam">("task");
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("Semua nilai");
   const tabs = ["Semua nilai", "Tugas", "Ulangan"];
 
+  const refreshRecap = (cId: string, sId: string) => {
+    Promise.all([getClassRoster(cId), getGradeRecap(cId, sId || undefined)])
+      .then(([rosterRows, recapRows]) => {
+        if (rosterRows) setRoster(rosterRows);
+        if (recapRows) setRecap(recapRows);
+      })
+      .catch(() => undefined);
+  };
+
   useEffect(() => {
-    listClasses().then((data) => {
-      if (!data?.classes.length) return;
-      setClasses(data.classes.map((c) => ({ id: c.id, name: c.name })));
-      setClassId((current) => current || data.classes[0].id);
-    });
-    listSubjects().then((data) => {
-      if (!data?.subjects.length) return;
-      setSubjects(data.subjects.map((s) => ({ id: s.id, name: s.name })));
-      setSubjectId((current) => current || data.subjects[0].id);
-    });
+    let active = true;
+    Promise.all([listClasses(), listSubjects()])
+      .then(([classData, subjectData]) => {
+        if (!active) return;
+        if (classData?.classes.length) {
+          setClasses(classData.classes.map((c) => ({ id: c.id, name: c.name })));
+          setClassId((current) => current || classData.classes[0].id);
+        }
+        if (subjectData?.subjects.length) {
+          setSubjects(subjectData.subjects.map((s) => ({ id: s.id, name: s.name })));
+          setSubjectId((current) => current || subjectData.subjects[0].id);
+        }
+        const cId = classData?.classes[0]?.id ?? "";
+        const sId = subjectData?.subjects[0]?.id ?? "";
+        if (!cId) return;
+        return Promise.all([getClassRoster(cId), getGradeRecap(cId, sId || undefined)])
+          .then(([rosterRows, recapRows]) => {
+            if (!active) return;
+            if (rosterRows) setRoster(rosterRows);
+            if (recapRows) setRecap(recapRows);
+          })
+          .catch(() => undefined);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setReady(true);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
-  useEffect(() => {
-    if (!classId) return;
-    getClassRoster(classId).then((data) => {
-      if (data) setRoster(data);
-    });
-    getGradeRecap(classId, subjectId || undefined)
-      .then((data) => data && setRecap(data))
-      .catch(() => undefined);
-  }, [classId, subjectId]);
-
   const recap = recapState;
-  const students = recap?.students ?? mockStudents.map((s) => ({
-    studentId: s.id,
-    name: s.name,
-    subjects: s.grades.map((g) => ({ subject: g.subject, task: g.task, exam: g.exam })),
-    average: Number(s.average),
-  }));
+  const students = recap?.students ?? [];
 
   const valuesOf = (entry: { task: number | null; exam: number | null }) => (tab === "Tugas" ? entry.task : tab === "Ulangan" ? entry.exam : entry.task ?? entry.exam);
   const classAverage = recap?.classAverage ?? (students.length ? Number((students.reduce((sum, s) => sum + (s.average ?? 0), 0) / students.length).toFixed(1)) : 0);
@@ -96,6 +110,8 @@ function TeacherGrades() {
     }
   };
 
+  if (!ready) return <PageLoading />;
+
   return (
     <>
       <PageIntro
@@ -115,10 +131,10 @@ function TeacherGrades() {
       />
       <div className="page-toolbar">
         <div className="toolbar-group">
-          <select className="select-control select-real" value={classId} onChange={(event) => setClassId(event.target.value)}>
+          <select className="select-control select-real" value={classId} onChange={(event) => { setClassId(event.target.value); refreshRecap(event.target.value, subjectId); }}>
             {classes.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
-          <select className="select-control select-real" value={subjectId} onChange={(event) => setSubjectId(event.target.value)}>
+          <select className="select-control select-real" value={subjectId} onChange={(event) => { setSubjectId(event.target.value); refreshRecap(classId, event.target.value); }}>
             {subjects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>
         </div>
@@ -183,18 +199,20 @@ function TeacherGrades() {
             </tbody>
           </table>
         </div>
+        {!entering && !students.length ? (
+          <p className="empty-state">Belum ada nilai tercatat untuk kelas ini. Gunakan tombol &quot;Catat nilai&quot; untuk mengisi nilai tugas atau ulangan.</p>
+        ) : null}
+        {entering && !roster.length ? (
+          <p className="empty-state">Kelas ini belum memiliki murid terdaftar.</p>
+        ) : null}
       </section>
     </>
   );
 }
 
 function StudentGrades({ live }: { live: Awaited<ReturnType<typeof getMyGrades>> | null }) {
-  const rows = live?.subjects ?? [
-    { subject: "Matematika", teacher: "Bu Nabila", task: 93, exam: null },
-    { subject: "Fisika", teacher: "Pak Dedi", task: 87, exam: null },
-    { subject: "Bahasa Indonesia", teacher: "Bu Sari", task: 91, exam: null },
-  ];
-  const average = live?.average ?? 88.6;
+  const rows = live?.subjects ?? [];
+  const average = live?.average;
 
   return (
     <>
@@ -211,18 +229,18 @@ function StudentGrades({ live }: { live: Awaited<ReturnType<typeof getMyGrades>>
         <div className="grade-overview-copy">
           <p className="section-kicker">Semester Ganjil 2026/2027</p>
           <h2>Performa belajarmu stabil.</h2>
-          <p>{live ? `Rata-ratamu ${average} dari ${rows.length} mata pelajaran.` : "Nilaimu berada di atas rata-rata kelas. Pertahankan konsistensi pada tugas dan ulangan berikutnya."}</p>
+          <p>{average != null ? `Rata-ratamu ${average} dari ${rows.length} mata pelajaran.` : "Belum ada nilai tercatat. Nilai tugas dan ulangan akan tampil di sini."}</p>
           <div className="grade-legend">
             <span><i className="legend-teal"></i>Nilai tugas</span>
             <span><i className="legend-purple"></i>Nilai ulangan</span>
           </div>
         </div>
-        <div className="grade-mini-stat"><strong>{live ? "Terbaru" : "+2.4%"}</strong><span>{live ? "diperbarui dari database" : "dibanding bulan lalu"}</span></div>
+        <div className="grade-mini-stat"><strong>Terbaru</strong><span>diperbarui dari database</span></div>
       </section>
       <section className="panel table-panel">
         <div className="panel-header">
           <div><p className="section-kicker">Rekap mata pelajaran</p><h2>Nilai terbaru</h2></div>
-          <span className="soft-status"><span className="status-dot"></span>{live ? "Data dari database" : "Diperbarui hari ini"}</span>
+          <span className="soft-status"><span className="status-dot"></span>Data dari database</span>
         </div>
         <div className="table-scroll">
           <table className="app-table student-grade-table">
@@ -245,6 +263,9 @@ function StudentGrades({ live }: { live: Awaited<ReturnType<typeof getMyGrades>>
             </tbody>
           </table>
         </div>
+        {!rows.length ? (
+          <p className="empty-state">Belum ada nilai yang tercatat untukmu.</p>
+        ) : null}
       </section>
     </>
   );
@@ -253,12 +274,20 @@ function StudentGrades({ live }: { live: Awaited<ReturnType<typeof getMyGrades>>
 export function GradesPage() {
   const { role } = useApp();
   const [studentLive, setStudentLive] = useState<Awaited<ReturnType<typeof getMyGrades>> | null>(null);
+  const [studentLoading, setStudentLoading] = useState(false);
 
   useEffect(() => {
     if (role !== "teacher") {
-      getMyGrades().then((data) => data && setStudentLive(data)).catch(() => undefined);
+      getMyGrades()
+        .then((data) => data && setStudentLive(data))
+        .catch(() => undefined)
+        .finally(() => setStudentLoading(false));
     }
   }, [role]);
 
-  return role === "student" ? <StudentGrades live={studentLive} /> : <TeacherGrades />;
+  return role === "student" ? (
+    studentLoading ? <PageLoading /> : <StudentGrades live={studentLive} />
+  ) : (
+    <TeacherGrades />
+  );
 }

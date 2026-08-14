@@ -139,13 +139,13 @@ export function SubscriptionPage() {
     }
   };
 
-  const activePlan = sub?.subscription?.planLabel ?? "Growth";
-  const priceLabel = sub?.subscription?.priceLabel ?? "Rp 1.250.000";
+  const activePlan = sub?.subscription?.planLabel ?? "—";
+  const priceLabel = sub?.subscription?.priceLabel ?? "—";
   const endsAt = sub?.subscription?.endsAt;
   const studentCount = data?.studentCount ?? 0;
   const teacherCount = data?.teacherCount ?? 0;
-  const capacity = data?.plans.find((p) => p.name === activePlan)?.capacity ?? "500";
-  const usagePercent = capacity !== "Tak terbatas" ? Math.min(100, Math.round((studentCount / Number(capacity)) * 100)) : 0;
+  const capacity = data?.plans.find((p) => p.name === activePlan)?.capacity ?? "—";
+  const usagePercent = capacity !== "Tak terbatas" && /^\d+$/.test(capacity) ? Math.min(100, Math.round((studentCount / Number(capacity)) * 100)) : 0;
 
   return (
     <>
@@ -175,7 +175,11 @@ export function SubscriptionPage() {
                 Semua fitur utama dapat digunakan.
               </p>
             </div>
-            <div className="subscription-price"><small>Rp</small><strong>{priceLabel.replace(/^Rp\s?/, "")}</strong><span>{sub?.subscription?.billingLabel === "yearly" ? "/ tahun" : "/ bulan"}</span></div>
+            <div className="subscription-price">{sub?.subscription ? (
+              <><small>Rp</small><strong>{priceLabel.replace(/^Rp\s?/, "")}</strong><span>{sub?.subscription?.billingLabel === "yearly" ? "/ tahun" : "/ bulan"}</span></>
+            ) : (
+              <strong>—</strong>
+            )}</div>
           </section>
           <div className="subscription-layout">
             <section className="panel usage-panel">

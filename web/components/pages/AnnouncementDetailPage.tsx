@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
-import { Avatar, Icon, PageIntro } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { announcements as mockAnnouncements, getAnnouncement as getMockAnnouncement } from "@/lib/data";
 import { getAnnouncement, listAnnouncements, updateAnnouncement } from "@/lib/actions/announcements";
 import { formatDateFull, formatTimeAgo, initialsOf } from "@/lib/adapters";
 import type { Announcement } from "@/lib/types";
@@ -102,14 +101,19 @@ function AnnouncementEditModal({
 export function AnnouncementDetailPage() {
   const { role, showToast } = useApp();
   const params = useParams<{ id: string }>();
-  const mock = getMockAnnouncement(params.id);
   const [item, setItem] = useState<Announcement | null>(null);
   const [related, setRelated] = useState<Announcement[]>([]);
+  const [settled, setSettled] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   const refetch = () => {
     getAnnouncement(params.id).then((data) => {
-      if (!data) return;
+      if (!data) {
+        setNotFound(true);
+        return;
+      }
+      setNotFound(false);
       setItem({
         id: data.id,
         tag: data.tag,
@@ -122,7 +126,7 @@ export function AnnouncementDetailPage() {
         icon: (data.icon === "calendar" || data.icon === "file" ? data.icon : "megaphone") as Announcement["icon"],
         callout: data.calloutTitle ? { title: data.calloutTitle, detail: data.calloutDetail ?? "" } : undefined,
       });
-    });
+    }).finally(() => setSettled(true));
   };
 
   useEffect(() => {
@@ -144,8 +148,27 @@ export function AnnouncementDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
-  const current = item ?? mock;
-  const relatedItems = related.length ? related : mockAnnouncements.filter((entry) => entry.id !== current.id).slice(0, 2);
+  if (!settled && !item && !notFound) return <PageLoading />;
+
+  const current = item;
+
+  if (notFound || !current) {
+    return (
+      <>
+        <PageIntro
+          kicker="Pengumuman"
+          title="Pengumuman tidak ditemukan"
+          subtitle="Pengumuman ini mungkin telah dihapus atau tidak tersedia untuk akunmu."
+          actions={
+            <Link className="secondary-button" href="/pengumuman"><Icon name="arrow" />Kembali ke pengumuman</Link>
+          }
+        />
+        <section className="panel">
+          <p className="empty-state">Pengumuman tidak ditemukan. Cek daftar pengumuman untuk berita terbaru.</p>
+        </section>
+      </>
+    );
+  }
 
   return (
     <>
@@ -193,13 +216,16 @@ export function AnnouncementDetailPage() {
           <p className="section-kicker">Pengumuman lain</p>
           <h2>Perlu kamu tahu</h2>
           <div className="related-list">
-            {relatedItems.map((entry) => (
+            {related.map((entry) => (
               <Link key={entry.id} href={`/pengumuman/${entry.id}`}>
                 <span className={`news-icon news-${newsTone[entry.icon]}`}><Icon name={entry.icon} /></span>
                 <span><strong>{entry.title}</strong><small>{entry.time}</small></span>
                 <Icon name="arrow" />
               </Link>
             ))}
+            {!related.length ? (
+              <p className="empty-state">Belum ada pengumuman lain.</p>
+            ) : null}
           </div>
         </aside>
       </div>

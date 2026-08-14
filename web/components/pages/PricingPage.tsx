@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Icon, PageIntro } from "@/components/ui";
+import { Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { plans as mockPlans } from "@/lib/data";
 import {
   createSubscriptionCheckout,
   getPlansWithStats,
@@ -75,15 +74,7 @@ export function PricingPage() {
         active: p.active,
         pending: p.pending,
       }))
-    : mockPlans.map((p) => ({
-        name: p.name,
-        description: p.description,
-        capacity: p.capacity,
-        price: p.price,
-        priceNumber: null,
-        active: p.name === "Growth",
-        pending: false,
-      }));
+    : [];
 
   const handleChoose = async (plan: LivePlan) => {
     if (plan.active) {
@@ -154,6 +145,8 @@ export function PricingPage() {
     showToast(`Kupon ${code} siap digunakan (diskon 99%).`);
   };
 
+  if (loading) return <PageLoading />;
+
   return (
     <>
       <PageIntro
@@ -205,10 +198,10 @@ export function PricingPage() {
           <Link className="text-button" href="/langganan">Buka halaman langganan <Icon name="arrow" /></Link>
         </section>
       ) : null}
-      {!loading && !user ? (
-        <p className="modal-hint">
-          Menampilkan contoh harga. <Link href="/masuk">Masuk sebagai admin sekolah</Link> untuk memilih paket dan membayar.
-        </p>
+      {!live && !error ? (
+        <section className="panel">
+          <p className="empty-state">Data paket sedang tidak tersedia. Muat ulang halaman untuk mencoba lagi.</p>
+        </section>
       ) : null}
       <section className="pricing-grid">
         {plans.map((plan) => {

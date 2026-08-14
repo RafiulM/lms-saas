@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
 import { useParams } from "next/navigation";
-import { Avatar, Icon, PageIntro } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { getClassDetail as getMockClass } from "@/lib/data";
 import { getClassDetailData, updateClass } from "@/lib/actions/classes";
 import { getGradeRecap } from "@/lib/actions/grades";
 import { listUsers } from "@/lib/actions/users";
@@ -118,15 +117,24 @@ function ClassEditModal({
 export function ClassDetailPage() {
   const { user: currentUser, showToast } = useApp();
   const params = useParams<{ id: string }>();
-  const mock = getMockClass(params.id);
   const [live, setLive] = useState<Awaited<ReturnType<typeof getClassDetailData>>>(null);
+  const [settled, setSettled] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [tab, setTab] = useState("Semua murid");
   const [editOpen, setEditOpen] = useState(false);
 
   const refetch = () => {
     getClassDetailData(params.id)
-      .then((data) => data && setLive(data))
-      .catch(() => undefined);
+      .then((data) => {
+        if (data) {
+          setLive(data);
+          setNotFound(false);
+        } else {
+          setNotFound(true);
+        }
+      })
+      .catch(() => undefined)
+      .finally(() => setSettled(true));
   };
 
   useEffect(() => {
@@ -134,16 +142,27 @@ export function ClassDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id]);
 
-  const detail = live ?? {
-    name: mock.name,
-    level: mock.level,
-    room: mock.room,
-    homeroom: mock.homeroom,
-    studentCount: mock.students,
-    roster: mock.roster.map((s) => ({ id: s.id, name: s.name })),
-    subjects: mock.subjects.map((s) => ({ name: s.name, teacher: s.teacher, tone: s.tone })),
-    schedule: [],
-  };
+  if (!settled && !live && !notFound) return <PageLoading />;
+
+  if (notFound || !live) {
+    return (
+      <>
+        <PageIntro
+          kicker="Pengguna & Kelas"
+          title="Kelas tidak ditemukan"
+          subtitle="Kelas ini mungkin telah dihapus atau tidak tersedia untuk akunmu."
+          actions={
+            <Link className="secondary-button" href="/pengguna"><Icon name="arrow" />Kembali ke pengguna</Link>
+          }
+        />
+        <section className="panel">
+          <p className="empty-state">Kelas tidak ditemukan. Periksa kembali daftar kelas di halaman Pengguna.</p>
+        </section>
+      </>
+    );
+  }
+
+  const detail = live;
   const isAdmin = currentUser?.role === "admin";
 
   return (
@@ -201,9 +220,12 @@ export function ClassDetailPage() {
                     <td><Link className="row-arrow" href={`/murid/${student.id}`} aria-label={`Buka ${student.name}`}><Icon name="arrow" /></Link></td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
+            </tbody>
+          </table>
           </div>
+          {!detail.roster.length ? (
+            <p className="empty-state">Belum ada murid terdaftar di kelas ini.</p>
+          ) : null}
           {detail.roster.length > 30 ? (
             <button className="text-button roster-more" type="button" onClick={() => showToast("Seluruh murid ditampilkan.")}>
               Lihat {detail.roster.length - 30} murid lainnya <Icon name="arrow" />
@@ -222,6 +244,9 @@ export function ClassDetailPage() {
                   <small>{subject.teacher}</small>
                 </div>
               ))}
+              {!detail.subjects.length ? (
+                <p className="empty-state">Belum ada mata pelajaran untuk kelas ini.</p>
+              ) : null}
             </div>
             <Link className="text-button" href="/jadwal">Lihat jadwal kelas <Icon name="arrow" /></Link>
           </section>

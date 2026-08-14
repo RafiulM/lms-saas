@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Icon, PageIntro } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
 import { authClient, useCurrentUser } from "@/lib/auth-client";
 import { getSchoolProfile } from "@/lib/actions/school";
@@ -99,23 +99,29 @@ function ProfileEditModal({ onClose }: { onClose: () => void }) {
 
 export function ProfilePage() {
   const { role, showToast } = useApp();
-  const { user: loggedInUser } = useCurrentUser();
-  const [schoolName, setSchoolName] = useState("SMA Negeri 5 Bandung");
+  const { user: loggedInUser, pending: userPending } = useCurrentUser();
+  const [schoolName, setSchoolName] = useState<string | null>(null);
+  const [schoolLoaded, setSchoolLoaded] = useState(false);
   const [emailNotif, setEmailNotif] = useState(true);
   const [dueReminder, setDueReminder] = useState(true);
   const [highContrast, setHighContrast] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
-    getSchoolProfile().then((data) => {
-      if (data?.school?.name) setSchoolName(data.school.name);
-    });
+    getSchoolProfile()
+      .then((data) => {
+        if (data?.school?.name) setSchoolName(data.school.name);
+      })
+      .catch(() => undefined)
+      .finally(() => setSchoolLoaded(true));
   }, []);
 
+  if (userPending || !schoolLoaded) return <PageLoading />;
+
   const isStudent = role === "student";
-  const name = loggedInUser?.name ?? (isStudent ? "Raka Pratama" : "Nabila Rahma");
+  const name = loggedInUser?.name ?? "Pengguna";
   const initials = (name.split(" ").map((part) => part[0]).join("").slice(0, 2) || "GU").toUpperCase();
-  const email = loggedInUser?.email ?? (isStudent ? "raka.pratama@sman5bdg.sch.id" : "nabila@sman5bdg.sch.id");
+  const email = loggedInUser?.email ?? "—";
   const roleLabel = loggedInUser?.role ? { admin: "Admin", teacher: "Guru", student: "Murid" }[loggedInUser.role] ?? "Pengguna" : isStudent ? "Murid" : "Guru";
 
   return (
@@ -123,7 +129,7 @@ export function ProfilePage() {
       <PageIntro
         kicker="Akun saya"
         title={name}
-        subtitle={`${roleLabel} · ${schoolName}`}
+        subtitle={`${roleLabel} · ${schoolName ?? "—"}`}
         actions={
           <button className="primary-button" type="button" onClick={() => setEditOpen(true)}>
             <Icon name="settings" />Edit profil
@@ -137,9 +143,9 @@ export function ProfilePage() {
           <span className="role-tag">{roleLabel}</span>
           <p>{email}</p>
           <div className="profile-details">
-            <div><span>Sekolah</span><strong>{schoolName}</strong></div>
+            <div><span>Sekolah</span><strong>{schoolName ?? "—"}</strong></div>
             <div><span>Peran</span><strong>{roleLabel}</strong></div>
-            <div><span>Status akun</span><strong>{loggedInUser ? "Masuk & terautentikasi" : "Mode demo"}</strong></div>
+            <div><span>Status akun</span><strong>Masuk & terautentikasi</strong></div>
           </div>
         </section>
         <section className="panel profile-settings-card">

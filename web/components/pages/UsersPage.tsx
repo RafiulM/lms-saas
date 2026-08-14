@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Icon, MetricCard, PageIntro, StatusPill } from "@/components/ui";
+import { Avatar, Icon, MetricCard, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { teacherUsers as mockUsers } from "@/lib/data";
 import { createUsers, deleteUser, listUsers } from "@/lib/actions/users";
 import { parseUserLines } from "@/lib/user-import";
 import { listClasses } from "@/lib/actions/classes";
@@ -41,13 +40,7 @@ function UsersPageBody({ live }: { live: Row[] | null }) {
     });
   }, []);
 
-  const users = live ?? mockUsers.map((u) => ({
-    id: u.slug ?? u.name,
-    name: u.name,
-    email: "",
-    role: u.role === "Guru" ? ("teacher" as const) : ("student" as const),
-    className: u.group,
-  }));
+  const users = live ?? [];
 
   const counts: Record<string, number> = {
     "Semua pengguna": users.length,
@@ -86,10 +79,6 @@ function UsersPageBody({ live }: { live: Row[] | null }) {
   };
 
   const handleDelete = async (user: Row) => {
-    if (!live) {
-      showToast("Hapus akun tersedia setelah masuk.");
-      return;
-    }
     try {
       await deleteUser(user.id);
       showToast(`Akun ${user.name} dihapus.`);
@@ -107,7 +96,9 @@ function UsersPageBody({ live }: { live: Row[] | null }) {
         subtitle="Kelola akun, pembagian kelas, dan jumlah pengguna aktif sekolah."
         actions={
           <>
-            <Link className="secondary-button" href={`/kelas/${classes[0]?.id ?? "xii-ipa-1"}`}><Icon name="users" />Lihat {classes[0]?.name ?? "kelas"}</Link>
+            {classes.length ? (
+              <Link className="secondary-button" href={`/kelas/${classes[0].id}`}><Icon name="users" />Lihat {classes[0].name}</Link>
+            ) : null}
             <button className="secondary-button" type="button" onClick={() => { setModal("bulk"); setBulkText(""); window.setTimeout(() => bulkRef.current?.focus(), 50); }}>
               <Icon name="download" />Impor dari Excel
             </button>
@@ -161,6 +152,9 @@ function UsersPageBody({ live }: { live: Row[] | null }) {
             </tbody>
           </table>
         </div>
+        {!users.length ? (
+          <p className="empty-state">Belum ada pengguna terdaftar. Tambahkan pengguna baru atau impor data dari Excel.</p>
+        ) : null}
       </section>
 
       {modal ? (
@@ -234,19 +228,30 @@ function UsersPageBody({ live }: { live: Row[] | null }) {
 
 export function UsersPage() {
   const [live, setLive] = useState<Row[] | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    listUsers().then((data) => {
-      if (!data) return;
-      setLive(data.users.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        role: u.role as Row["role"],
-        className: u.className,
-      })));
-    });
+    let active = true;
+    listUsers()
+      .then((data) => {
+        if (!data || !active) return;
+        setLive(data.users.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role as Row["role"],
+          className: u.className,
+        })));
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
+  if (loading) return <PageLoading />;
   return <UsersPageBody live={live} />;
 }

@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Avatar, Icon, PageIntro, StatusPill } from "@/components/ui";
+import { Avatar, Icon, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { getTask, submissions as mockSubmissions } from "@/lib/data";
 import {
   getAssignment,
   getMySubmission,
@@ -185,8 +184,6 @@ type SubmissionRow = {
   feedback: string | null;
 };
 
-const TODAY = new Date();
-
 export function TaskDetailPage() {
   const { role, showToast } = useApp();
   const router = useRouter();
@@ -194,9 +191,10 @@ export function TaskDetailPage() {
   const taskId = params.id;
   const isStudent = role === "student";
 
-  const mockTask = getTask(taskId, role);
   const [task, setTask] = useState<Task | null>(null);
   const [raw, setRaw] = useState<AssignmentData | null>(null);
+  const [settled, setSettled] = useState(false);
+  const [notFound, setNotFound] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [announceOpen, setAnnounceOpen] = useState(false);
   const [submissions, setSubmissions] = useState<SubmissionRow[] | null>(null);
@@ -208,29 +206,35 @@ export function TaskDetailPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => {
-    getAssignment(taskId).then((data) => {
-      if (!data) return;
-      setRaw(data);
-      setTask({
-        id: data.id,
-        title: data.title,
-        subject: data.subject,
-        className: data.className,
-        teacher: data.teacher,
-        submissions: "",
-        due: formatDue(data.dueAt),
-        status: "Aktif",
-        tone: data.tone as Task["tone"],
-        postedAt: formatTimeAgo(data.createdAt),
-        weight: data.weight,
-        format: data.format ?? "PDF, maks. 10 MB",
-        attachment: data.attachmentName ?? `Materi ${data.title}.pdf`,
-        attachmentSize: data.attachmentSize ?? "Materi pendukung",
-        instructions: data.instructions ?? data.description ?? "",
-        steps: data.steps.length ? data.steps : ["Kerjakan sesuai instruksi.", "Periksa kembali jawabanmu.", "Unggah jawaban sebelum tenggat."],
-        action: "Buka",
-      });
-    });
+    getAssignment(taskId)
+      .then((data) => {
+        if (!data) {
+          setNotFound(true);
+          return;
+        }
+        setNotFound(false);
+        setRaw(data);
+        setTask({
+          id: data.id,
+          title: data.title,
+          subject: data.subject,
+          className: data.className,
+          teacher: data.teacher,
+          submissions: "",
+          due: formatDue(data.dueAt),
+          status: "Aktif",
+          tone: data.tone as Task["tone"],
+          postedAt: formatTimeAgo(data.createdAt),
+          weight: data.weight,
+          format: data.format ?? "PDF, maks. 10 MB",
+          attachment: data.attachmentName ?? `Materi ${data.title}.pdf`,
+          attachmentSize: data.attachmentSize ?? "Materi pendukung",
+          instructions: data.instructions ?? data.description ?? "",
+          steps: data.steps.length ? data.steps : [],
+          action: "Buka",
+        });
+      })
+      .finally(() => setSettled(true));
     if (isStudent) {
       getMySubmission(taskId).then((data) => {
         if (!data) return;
@@ -260,7 +264,9 @@ export function TaskDetailPage() {
     load();
   }, [load]);
 
-  const current = task ?? mockTask;
+  const current = task;
+
+  const loading = !settled && !task && !notFound;
 
   const handleUpload = async (file: File) => {
     setUploading(true);
@@ -296,16 +302,27 @@ export function TaskDetailPage() {
     }
   };
 
-  const liveSubmissions = submissions ?? (isStudent ? [] : mockSubmissions.map((m, index) => ({
-    id: m.name,
-    studentName: m.name,
-    fileName: "jawaban.pdf",
-    fileUrl: null,
-    fileSize: "820 KB",
-    submittedAt: new Date(TODAY.getTime() - (index + 1) * 60 * 60000),
-    grade: m.status === "Sudah dinilai" ? 92 : null,
-    feedback: null,
-  })));
+  const liveSubmissions = submissions ?? [];
+
+  if (loading) return <PageLoading />;
+
+  if (notFound || !current) {
+    return (
+      <>
+        <PageIntro
+          kicker="Tugas"
+          title="Tugas tidak ditemukan"
+          subtitle="Tugas ini mungkin telah dihapus atau tidak tersedia untuk akunmu."
+          actions={
+            <Link className="secondary-button" href="/tugas"><Icon name="arrow" />Kembali ke tugas</Link>
+          }
+        />
+        <section className="panel">
+          <p className="empty-state">Tugas tidak ditemukan. Periksa kembali daftar tugas atau hubungi guru kelasmu.</p>
+        </section>
+      </>
+    );
+  }
 
   if (isStudent) {
     const submitted = Boolean(mySubmission);
@@ -465,6 +482,9 @@ export function TaskDetailPage() {
                 ) : null}
               </article>
             ))}
+            {!liveSubmissions.length ? (
+              <p className="empty-state">Belum ada siswa yang mengumpulkan jawaban.</p>
+            ) : null}
           </div>
         </section>
       </div>

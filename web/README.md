@@ -96,6 +96,6 @@ Alur autentikasi: login/daftar di `/masuk` menggunakan Better Auth; komponen hea
 ## Catatan
 
 - File unggahan disimpan ke `public/uploads` (dalam produksi ganti ke S3-compatible storage).
-- Halaman UI lain (Beranda, Tugas, Nilai, Jadwal, dll.) masih memakai data mock `lib/data.ts`; seluruh server action siap dihubungkan dari halaman-halaman tersebut.
+- Semua halaman memuat data nyata dari server action dan menampilkan kerangka pemuatan (`PageLoading`) hingga respons server tiba; tidak ada lagi data mock/placeholder.
 - Server action memanggil Better Auth dengan `headers: await headers()` (lihat `getRequestHeaders()` di `lib/auth-helpers.ts`) — wajib, karena `nextCookies()` tidak menyuntikkan request headers ke pemanggilan `auth.api.*` langsung.
 - Setelah `npm run build`, restart server lama (`next start`/`next dev`) — server yang berjalan dari build sebelumnya akan menyajikan chunk JS yang sudah dihapus (404 → React tidak ter-hydrate → form submit tidak berfungsi).

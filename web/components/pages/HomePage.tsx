@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Avatar, Icon, MetricCard, PageIntro, StatusPill } from "@/components/ui";
+import { Avatar, Icon, MetricCard, PageIntro, PageLoading, StatusPill } from "@/components/ui";
 import { useApp } from "@/lib/app-context";
-import { teacherTasks } from "@/lib/data";
 import { getActivityReport, getDashboard, getRecentActivity } from "@/lib/actions/dashboard";
 import { formatDueTimeOnly, formatTimeAgo, initialsOf } from "@/lib/adapters";
 import type { Task, TaskStatus, Tone } from "@/lib/types";
 
-type DashboardData = Awaited<ReturnType<typeof getDashboard>>;
+type DashboardData = NonNullable<Awaited<ReturnType<typeof getDashboard>>>;
 type ActivityData = Awaited<ReturnType<typeof getRecentActivity>>;
 
 function ActivityModal({ activity, onClose }: { activity: ActivityData; onClose: () => void }) {
@@ -89,12 +88,6 @@ function submissionWidth(submissions: string): number {
   return Math.round((submitted / total) * 100);
 }
 
-function taskPill(status: TaskStatus): "current" | "upcoming" | "done" {
-  if (status === "Perlu dinilai" || status === "Belum dikerjakan") return "current";
-  if (status === "Selesai" || status === "Sudah dikumpulkan") return "done";
-  return "upcoming";
-}
-
 const urgentToneIcon: Record<Tone, "file" | "chart" | "school"> = {
   teal: "file",
   purple: "chart",
@@ -108,10 +101,10 @@ function TeacherHome({ live }: { live: DashboardData }) {
   const [downloading, setDownloading] = useState(false);
   const [activity, setActivity] = useState<ActivityData | null>(null);
   const [activityLoading, setActivityLoading] = useState(false);
-  const assignments = live?.assignments ?? [];
-  const schedule = live?.schedule ?? [];
-  const announcements = live?.announcements ?? [];
-  const stats = live?.stats ?? { studentCount: 284, teacherCount: 24, classAverage: 86.4 };
+  const assignments = live.assignments;
+  const schedule = live.schedule;
+  const announcements = live.announcements;
+  const stats = live.stats;
 
   const handleOpenActivity = () => {
     setActivityLoading(true);
@@ -160,9 +153,8 @@ function TeacherHome({ live }: { live: DashboardData }) {
   })).slice(0, 3);
 
   const totalSubmitted = assignments.reduce((sum, a) => sum + (a.submittedCount ?? 0), 0);
-  
-  const greetingName = (live?.user?.name ?? "Nabila").split(" ")[0];
-  const greetingInitial = initialsOf(live?.user?.name ?? "Nabila");
+
+  const greetingName = (live.user?.name ?? "Pengguna").split(" ")[0];
 
   const scheduleRows = schedule.map((s) => ({
     time: s.startTime,
@@ -194,11 +186,11 @@ function TeacherHome({ live }: { live: DashboardData }) {
       <section className="focus-card" aria-labelledby="focus-title">
         <div className="focus-content">
           <p className="focus-kicker"><span></span>Fokus hari ini</p>
-          <h2 id="focus-title">{schedule.length ? `${schedule.length} sesi mengajar\nmenunggumu hari ini.` : "Tiga kelas menunggumu\nhari ini."}</h2>
+          <h2 id="focus-title">{schedule.length ? `${schedule.length} sesi mengajar\nmenunggumu hari ini.` : "Belum ada sesi mengajar\nhari ini."}</h2>
           <p className="focus-description">Mulai dari jadwal pertama, cek tugas yang masuk, lalu beri umpan balik terbaikmu.</p>
           <div className="focus-actions">
             <Link className="light-button" href="/jadwal">Lihat agenda <Icon name="arrow" /></Link>
-            <span className="focus-note"><span className="pulse-dot"></span>{schedule.some((s) => s.startTime) ? "Jadwal hari ini siap" : "1 kelas sedang berlangsung"}</span>
+            <span className="focus-note"><span className="pulse-dot"></span>{schedule.length ? "Jadwal hari ini siap" : "Belum ada jadwal"}</span>
           </div>
         </div>
         <div className="focus-visual" aria-hidden="true">
@@ -212,15 +204,15 @@ function TeacherHome({ live }: { live: DashboardData }) {
             </div>
           </div>
           <div className="floating-stat stat-students"><span className="floating-icon">+</span><strong>{stats.studentCount}</strong><small>siswa aktif</small></div>
-          <div className="floating-stat stat-classes"><span className="floating-icon check-icon">&#10003;</span><strong>{stats.classAverage ?? 86.4}</strong><small>rata-rata kelas</small></div>
+          <div className="floating-stat stat-classes"><span className="floating-icon check-icon">&#10003;</span><strong>{stats.classAverage ?? "—"}</strong><small>rata-rata kelas</small></div>
         </div>
       </section>
 
       <section className="metric-grid" aria-label="Ringkasan aktivitas">
-        <MetricCard tone="teal" label="Tugas aktif" value={<>{assignments.length || 8} <span>tugas</span></>} detail={urgent.length ? `${urgent.length} menunggu penilaian` : "Semua sudah dinilai"} trend={live ? `${assignments.length} minggu ini` : "+2 minggu ini"} />
-        <MetricCard tone="purple" label="Rata-rata kelas" value={<>{stats.classAverage ?? "—"} <span>/ 100</span></>} detail="Dari seluruh mata pelajaran" trend={live ? "Terbaru" : "+4.8% bulan ini"} />
-        <MetricCard tone="coral" label="Siswa aktif" value={<>{stats.studentCount} <span>siswa</span></>} detail={stats.teacherCount ? `${stats.teacherCount} guru aktif` : "Dari 6 kelas yang kamu ajar"} trend={live ? "Terhitung otomatis" : "Stabil minggu ini"} trendTone="neutral" />
-        <MetricCard tone="blue" label="Pengumpulan baru" value={<>{totalSubmitted || 26} <span>jawaban</span></>} detail="Semua tugas berjalan" trend={live ? `${assignments.length} tugas aktif` : "+12 hari ini"} />
+        <MetricCard tone="teal" label="Tugas aktif" value={<>{assignments.length} <span>tugas</span></>} detail={urgent.length ? `${urgent.length} menunggu penilaian` : "Semua sudah dinilai"} trend={`${assignments.length} minggu ini`} />
+        <MetricCard tone="purple" label="Rata-rata kelas" value={<>{stats.classAverage ?? "—"} <span>/ 100</span></>} detail="Dari seluruh mata pelajaran" trend="Terbaru" />
+        <MetricCard tone="coral" label="Siswa aktif" value={<>{stats.studentCount} <span>siswa</span></>} detail={stats.teacherCount ? `${stats.teacherCount} guru aktif` : "Belum ada guru terdaftar"} trend="Terhitung otomatis" trendTone="neutral" />
+        <MetricCard tone="blue" label="Pengumpulan baru" value={<>{totalSubmitted} <span>jawaban</span></>} detail="Semua tugas berjalan" trend={`${assignments.length} tugas aktif`} />
       </section>
 
       <div className="content-grid">
@@ -231,30 +223,29 @@ function TeacherHome({ live }: { live: DashboardData }) {
           </div>
           <div className="schedule-summary">
             <div className="date-tile"><span>{todayShort}</span><strong>{TODAY.getDate()}</strong></div>
-            <div className="summary-copy"><strong>{schedule.length ? `${schedule.length} sesi belajar` : "4 sesi belajar"}</strong><span>{schedule.length ? `${schedule[0]?.startTime ?? "07:30"} - ${schedule[schedule.length - 1]?.endTime ?? "15:30"} WIB` : "08:00 - 15:30 WIB"}</span></div>
-            <div className="live-status"><span className="live-status-dot"></span>{schedule.length ? "Jadwal tersedia" : "1 kelas berlangsung"}</div>
+            <div className="summary-copy"><strong>{schedule.length ? `${schedule.length} sesi belajar` : "Belum ada sesi"}</strong><span>{schedule.length ? `${schedule[0]?.startTime ?? "—"} - ${schedule[schedule.length - 1]?.endTime ?? "—"} WIB` : "Atur jadwal melalui menu Jadwal Pelajaran"}</span></div>
+            <div className="live-status"><span className="live-status-dot"></span>{schedule.length ? "Jadwal tersedia" : "Belum ada jadwal"}</div>
           </div>
-          <div className="schedule-list">
-            {(scheduleRows.length ? scheduleRows : [
-              { time: "08:00", end: "09:30", subject: "Matematika", className: "XII IPA 1", teacher: "Ruang 203", tone: "teal" },
-              { time: "10:00", end: "11:30", subject: "Matematika", className: "XI IPA 2", teacher: "Ruang 201", tone: "teal" },
-              { time: "13:00", end: "14:30", subject: "Statistika", className: "XII IPA 3", teacher: "Ruang 204", tone: "coral" },
-              { time: "14:45", end: "15:30", subject: "Wali Kelas", className: "XII IPA 1", teacher: "Ruang 203", tone: "orange" },
-            ]).map((row, index) => (
-              <article key={`${row.time}-${index}`} className={`schedule-row${index === 0 ? " current" : ""}${index === (scheduleRows.length ? scheduleRows.length - 1 : 3) ? " last-row" : ""}`}>
-                <div className="schedule-time"><strong>{row.time}</strong><span>{row.end}</span></div>
-                <div className="schedule-line"><span className="schedule-marker"></span></div>
-                <div className="schedule-detail">
-                  <div className="schedule-title-row">
-                    <strong>{row.subject}</strong>
-                    {index === 0 && live ? <span className="status-pill current-pill">Berlangsung</span> : null}
+          {scheduleRows.length ? (
+            <div className="schedule-list">
+              {scheduleRows.map((row, index) => (
+                <article key={`${row.time}-${index}`} className={`schedule-row${index === 0 ? " current" : ""}${index === scheduleRows.length - 1 ? " last-row" : ""}`}>
+                  <div className="schedule-time"><strong>{row.time}</strong><span>{row.end}</span></div>
+                  <div className="schedule-line"><span className="schedule-marker"></span></div>
+                  <div className="schedule-detail">
+                    <div className="schedule-title-row">
+                      <strong>{row.subject}</strong>
+                      {index === 0 ? <span className="status-pill current-pill">Berlangsung</span> : null}
+                    </div>
+                    <h3>{row.className}</h3>
+                    <p><Icon name="school" />{row.teacher} <span className="detail-separator"></span>Kelas aktif</p>
                   </div>
-                  <h3>{row.className}</h3>
-                  <p><Icon name="school" />{row.teacher} <span className="detail-separator"></span>{row.tone ? "Kelas aktif" : "32 siswa"}</p>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Belum ada jadwal untuk hari ini.</p>
+          )}
         </section>
 
         <section className="panel announcement-panel" aria-labelledby="announcement-title">
@@ -262,11 +253,7 @@ function TeacherHome({ live }: { live: DashboardData }) {
             <div><p className="section-kicker">Dari sekolah</p><h2>Pengumuman terbaru</h2></div>
             <Link className="round-arrow" href="/pengumuman" aria-label="Lihat semua pengumuman"><Icon name="arrow" /></Link>
           </div>
-          {(announcements.length ? announcements : [
-            { id: "rapat-guru-bulanan", tag: "Info sekolah", title: "Rapat guru bulanan", body: "Rapat koordinasi akan dilaksanakan Jumat, 14 Agustus pukul 15:30 di aula utama.", author: "Andi Ramadhan", createdAt: TODAY },
-            { id: "pembaruan-kalender-akademik", tag: "Akademik", title: "Pembaruan kalender akademik", body: "", author: "Admin sekolah", createdAt: new Date(TODAY.getTime() - 86400000) },
-            { id: "pelatihan-kelashub", tag: "KelasHub", title: "Pelatihan platform KelasHub", body: "", author: "Tim KelasHub", createdAt: new Date(TODAY.getTime() - 2 * 86400000) },
-          ] as { id: string; tag: string; title: string; body: string; author: string; createdAt: Date }[]).map((item, index) => (
+          {announcements.length ? announcements.map((item, index) => (
             index === 0 ? (
               <Link key={item.id} href={`/pengumuman/${item.id}`} className="announcement-featured">
                 <div className="announcement-art">
@@ -282,7 +269,9 @@ function TeacherHome({ live }: { live: DashboardData }) {
             ) : (
               <Link key={item.id} href={`/pengumuman/${item.id}`} className="announcement-row"><span className="announcement-index">{String(index + 1).padStart(2, "0")}</span><div><strong>{item.title}</strong><span>{item.author} <i></i>{formatTimeAgo(item.createdAt)}</span></div><Icon name="arrow" /></Link>
             )
-          ))}
+          )) : (
+            <p className="empty-state">Belum ada pengumuman dari sekolah.</p>
+          )}
         </section>
       </div>
 
@@ -292,23 +281,27 @@ function TeacherHome({ live }: { live: DashboardData }) {
             <div><p className="section-kicker">Perlu perhatian</p><h2>Tugas yang mendesak</h2></div>
             <Link className="text-button" href="/tugas">Kelola tugas <Icon name="arrow" /></Link>
           </div>
-          <div className="urgent-list">
-            {(urgent.length ? urgent : teacherTasks.slice(0, 3)).map((task) => (
-              <article key={task.id} className="urgent-row">
-                <div className={`assignment-icon assignment-${task.tone}`}><Icon name={urgentToneIcon[task.tone]} /></div>
-                <div className="assignment-copy"><strong>{task.title}</strong><span>{task.className} <i></i>{task.subject}</span></div>
-                <div className="submission-progress">
-                  <div className="progress-label"><strong>{task.submissions || "0/0"}</strong><span>terkumpul</span></div>
-                  <div className="thin-progress"><span style={{ width: `${submissionWidth(task.submissions)}%` }}></span></div>
-                </div>
-                <div className={`due-date ${task.status === "Perlu dinilai" ? "due-today" : "due-tomorrow"}`}>
-                  <span>{"Besok"}</span>
-                  <strong>{task.due}</strong>
-                </div>
-                <Link className="row-arrow" href={`/tugas/${task.id}`} aria-label={`Buka ${task.title}`}><Icon name="arrow" /></Link>
-              </article>
-            ))}
-          </div>
+          {urgent.length ? (
+            <div className="urgent-list">
+              {urgent.map((task) => (
+                <article key={task.id} className="urgent-row">
+                  <div className={`assignment-icon assignment-${task.tone}`}><Icon name={urgentToneIcon[task.tone]} /></div>
+                  <div className="assignment-copy"><strong>{task.title}</strong><span>{task.className} <i></i>{task.subject}</span></div>
+                  <div className="submission-progress">
+                    <div className="progress-label"><strong>{task.submissions || "0/0"}</strong><span>terkumpul</span></div>
+                    <div className="thin-progress"><span style={{ width: `${submissionWidth(task.submissions)}%` }}></span></div>
+                  </div>
+                  <div className={`due-date ${task.status === "Perlu dinilai" ? "due-today" : "due-tomorrow"}`}>
+                    <span>{"Besok"}</span>
+                    <strong>{task.due}</strong>
+                  </div>
+                  <Link className="row-arrow" href={`/tugas/${task.id}`} aria-label={`Buka ${task.title}`}><Icon name="arrow" /></Link>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Belum ada tugas yang membutuhkan perhatian.</p>
+          )}
         </section>
 
         <section className="panel activity-panel" aria-labelledby="activity-title">
@@ -321,7 +314,7 @@ function TeacherHome({ live }: { live: DashboardData }) {
               <article key={a.id} className="activity-row"><Avatar initials={initialsOf(a.teacher)} tone="blue" /><div><p>Tugas <strong>{a.title}</strong> aktif untuk {a.className}</p><span>{a.subject} <i className="activity-dot teal-dot"></i> {a.submittedCount} terkumpul</span></div></article>
             ))}
             {!assignments.length ? (
-              <article className="activity-row"><span className="activity-system"><Icon name="grid" /></span><div><p><strong>Admin sekolah</strong> mengelola ruang kerja</p><span>baru saja <i className="activity-dot blue-dot"></i> Sistem</span></div></article>
+              <p className="empty-state">Belum ada aktivitas tugas.</p>
             ) : null}
           </div>
         </section>
@@ -329,7 +322,7 @@ function TeacherHome({ live }: { live: DashboardData }) {
 
       <footer className="main-footer">
         <span><span className="footer-pulse"></span>Semua sistem berjalan normal</span>
-        <span>Data terakhir diperbarui {live ? "saat ini" : "2 menit lalu"}</span>
+        <span>Data terakhir diperbarui saat ini</span>
       </footer>
 
       {activity ? <ActivityModal activity={activity} onClose={() => setActivity(null)} /> : null}
@@ -338,12 +331,12 @@ function TeacherHome({ live }: { live: DashboardData }) {
 }
 
 function StudentHome({ live }: { live: DashboardData }) {
-  const schedule = live?.schedule ?? [];
-  const assignments = live?.assignments ?? [];
-  const announcements = live?.announcements ?? [];
-  const student = live?.student;
-  const greetingName = (live?.user?.name ?? "Raka").split(" ")[0];
-  const donePercent = student && student.totalAssignments ? Math.round((student.submittedCount / student.totalAssignments) * 100) : 82;
+  const schedule = live.schedule;
+  const assignments = live.assignments;
+  const announcements = live.announcements;
+  const student = live.student;
+  const greetingName = (live.user?.name ?? "Pengguna").split(" ")[0];
+  const donePercent = student && student.totalAssignments ? Math.round((student.submittedCount / student.totalAssignments) * 100) : 0;
   const featured = assignments.slice(0, 3).map((a) => ({
     id: a.id,
     title: a.title,
@@ -377,7 +370,7 @@ function StudentHome({ live }: { live: DashboardData }) {
         <div>
           <p className="focus-kicker"><span></span>Perjalanan belajarmu</p>
           <h2>Tetap satu langkah<br />di depan.</h2>
-          <p>{student && student.totalAssignments ? `Kamu sudah mengumpulkan ${student.submittedCount} dari ${student.totalAssignments} tugas aktif.` : "Kamu sudah menyelesaikan 82% tugas minggu ini. Sedikit lagi menuju targetmu."}</p>
+          <p>{student && student.totalAssignments ? `Kamu sudah mengumpulkan ${student.submittedCount} dari ${student.totalAssignments} tugas aktif.` : "Belum ada tugas aktif. Cek kembali nanti."}</p>
           <div className="student-hero-progress">
             <div><span>Minggu ke-3</span><strong>{donePercent}%</strong></div>
             <div className="student-progress-track"><span style={{ width: `${donePercent}%` }}></span></div>
@@ -391,9 +384,9 @@ function StudentHome({ live }: { live: DashboardData }) {
       </section>
 
       <section className="metric-grid student-metrics">
-        <MetricCard tone="teal" label="Tugas belum selesai" value={<>{student ? Math.max(0, student.totalAssignments - student.submittedCount) : 5} <span>tugas</span></>} detail={`${assignments.length} aktif minggu ini`} trend="Perlu dikerjakan" />
-        <MetricCard tone="purple" label="Rata-rata nilaimu" value={<>{student?.average ?? 88.6} <span>/ 100</span></>} detail="Dari tugas dan ulangan" trend={live ? "Terbaru" : "+2.4% bulan ini"} />
-        <MetricCard tone="coral" label="Jadwal belajar" value={<>{schedule.length || 4} <span>pelajaran</span></>} detail={schedule.length ? `${schedule[0]?.startTime ?? "07:30"} - ${schedule[schedule.length - 1]?.endTime ?? "15:30"} WIB` : "08:00 - 15:30 WIB"} trend="Hari ini" trendTone="neutral" />
+        <MetricCard tone="teal" label="Tugas belum selesai" value={<>{student ? Math.max(0, student.totalAssignments - student.submittedCount) : 0} <span>tugas</span></>} detail={`${assignments.length} aktif minggu ini`} trend="Perlu dikerjakan" />
+        <MetricCard tone="purple" label="Rata-rata nilaimu" value={<>{student?.average ?? "—"} <span>/ 100</span></>} detail="Dari tugas dan ulangan" trend="Terbaru" />
+        <MetricCard tone="coral" label="Jadwal belajar" value={<>{schedule.length} <span>pelajaran</span></>} detail={schedule.length ? `${schedule[0]?.startTime ?? "—"} - ${schedule[schedule.length - 1]?.endTime ?? "—"} WIB` : "Belum ada jadwal hari ini"} trend="Hari ini" trendTone="neutral" />
       </section>
 
       <div className="student-content-grid">
@@ -402,25 +395,24 @@ function StudentHome({ live }: { live: DashboardData }) {
             <div><p className="section-kicker">Jadwal hari ini</p><h2>Agenda belajarmu</h2></div>
             <Link className="text-button" href="/jadwal">Lihat semua <Icon name="arrow" /></Link>
           </div>
-          <div className="student-agenda">
-            {(studentScheduleRows.length ? studentScheduleRows : [
-              { time: "08:00", end: "09:30", subject: "Matematika", status: "Sedang berlangsung", className: "XI IPA 2", teacher: "Bu Nabila" },
-              { time: "10:00", end: "11:30", subject: "Fisika", className: "XI IPA 2", teacher: "Pak Dedi" },
-              { time: "13:00", end: "14:30", subject: "Bahasa Indonesia", className: "XI IPA 2", teacher: "Bu Sari" },
-            ]).map((row) => (
-              <article key={`${row.time}-${row.subject}`} className="student-agenda-row">
-                <div className="student-time"><strong>{row.time}</strong><span>{row.end}</span></div>
-                <div>
-                  <div className="schedule-title-row">
-                    <strong>{row.subject}</strong>
-                    {row.status ? <span className="status-pill current-pill">{row.status}</span> : null}
+          {studentScheduleRows.length ? (
+            <div className="student-agenda">
+              {studentScheduleRows.map((row) => (
+                <article key={`${row.time}-${row.subject}`} className="student-agenda-row">
+                  <div className="student-time"><strong>{row.time}</strong><span>{row.end}</span></div>
+                  <div>
+                    <div className="schedule-title-row">
+                      <strong>{row.subject}</strong>
+                    </div>
+                    <h3>{row.className}</h3>
+                    <p><Icon name="school" />Kelas {row.className} <span className="detail-separator"></span>{row.teacher}</p>
                   </div>
-                  <h3>{row.className}</h3>
-                  <p><Icon name="school" />{row.teacher ? `Kelas ${row.className}` : "Kelas aktif"} <span className="detail-separator"></span>{row.teacher}</p>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Belum ada jadwal untuk hari ini.</p>
+          )}
         </section>
 
         <section className="panel student-task-panel">
@@ -428,19 +420,19 @@ function StudentHome({ live }: { live: DashboardData }) {
             <div><p className="section-kicker">Perlu dikerjakan</p><h2>Tugas terdekat</h2></div>
             <Link className="round-arrow" href="/tugas" aria-label="Lihat tugas"><Icon name="arrow" /></Link>
           </div>
-          <div className="student-task-list">
-            {(featured.length ? featured : [
-              { id: "persamaan-kuadrat", title: "Persamaan Kuadrat", subject: "Matematika", tone: "teal" as Tone, due: "17:00", status: "Belum dikerjakan" },
-              { id: "rangkuman-gerak-parabola", title: "Rangkuman Gerak Parabola", subject: "Fisika", tone: "purple" as Tone, due: "12:00", status: "Sedang dikerjakan" },
-              { id: "refleksi-proyek-akhir", title: "Refleksi Proyek Akhir", subject: "Wali kelas", tone: "coral" as Tone, due: "15:30", status: "Belum dikerjakan" },
-            ]).map((task) => (
-              <Link key={task.id} href={`/tugas/${task.id}`} className="student-task-item">
-                <span className={`assignment-icon assignment-${task.tone}`}><Icon name={urgentToneIcon[task.tone]} /></span>
-                <div><strong>{task.title}</strong><span>{task.subject} <i></i>{task.due}</span></div>
-                <span className={task.status === "Belum dikerjakan" ? "task-priority" : "task-priority tomorrow-priority"}>{task.status === "Sedang dikerjakan" ? "Lanjutkan" : "Penting"}</span>
-              </Link>
-            ))}
-          </div>
+          {featured.length ? (
+            <div className="student-task-list">
+              {featured.map((task) => (
+                <Link key={task.id} href={`/tugas/${task.id}`} className="student-task-item">
+                  <span className={`assignment-icon assignment-${task.tone}`}><Icon name={urgentToneIcon[task.tone]} /></span>
+                  <div><strong>{task.title}</strong><span>{task.subject} <i></i>{task.due}</span></div>
+                  <span className={task.status === "Belum dikerjakan" ? "task-priority" : "task-priority tomorrow-priority"}>{task.status === "Sedang dikerjakan" ? "Lanjutkan" : "Penting"}</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="empty-state">Belum ada tugas yang perlu dikerjakan.</p>
+          )}
         </section>
       </div>
 
@@ -459,10 +451,9 @@ function StudentHome({ live }: { live: DashboardData }) {
           <div className="announcement-strip-icon"><Icon name="megaphone" /></div>
           <div>
             <p className="section-kicker">Pengumuman sekolah</p>
-            <strong>Rapat orang tua murid akan dilaksanakan Sabtu, 16 Agustus.</strong>
-            <span>2 jam lalu oleh Admin sekolah</span>
+            <strong>Belum ada pengumuman.</strong>
+            <span>Pengumuman terbaru akan tampil di sini.</span>
           </div>
-          <Link className="text-button" href="/pengumuman/rapat-guru-bulanan">Baca <Icon name="arrow" /></Link>
         </section>
       )}
     </>
@@ -471,13 +462,24 @@ function StudentHome({ live }: { live: DashboardData }) {
 
 export function HomePage() {
   const { role } = useApp();
-  const [live, setLive] = useState<DashboardData>(null);
+  const [live, setLive] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getDashboard().then((data) => {
-      if (data) setLive(data);
-    });
+    let active = true;
+    getDashboard()
+      .then((data) => {
+        if (data && active) setLive(data);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
+  if (loading || !live) return <PageLoading />;
   return role === "student" ? <StudentHome live={live} /> : <TeacherHome live={live} />;
 }
